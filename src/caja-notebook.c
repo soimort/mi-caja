@@ -318,7 +318,7 @@ build_tab_label (CajaNotebook *nb, CajaWindowSlot *slot)
     gtk_widget_show (image);
 
     gtk_box_pack_start (GTK_BOX (hbox), close_button, FALSE, FALSE, 0);
-    gtk_widget_show (close_button);
+    //gtk_widget_show (close_button);
 
     drag_info = g_new0 (CajaDragSlotProxyInfo, 1);
     drag_info->target_slot = slot;
