@@ -11,5 +11,6 @@ $ ./configure \
     --libexecdir=/usr/lib/caja \
     --enable-introspection \
     --disable-update-mimedb
+$ make
 $ src/caja
 ```
