@@ -1657,7 +1657,7 @@ location_has_really_changed (CajaWindowSlot *slot)
 
     char *uri;
     uri = g_file_get_uri (slot->location);
-    printf(">>> location updated: %s\n", uri); fflush(stdout);
+    printf(">>> location updated: %lX %s\n", slot, uri); fflush(stdout);
 }
 
 static void

@@ -369,6 +369,7 @@ caja_notebook_add_tab (CajaNotebook *notebook,
                        int position,
                        gboolean jump_to)
 {
+    printf(">>> slot added: %lX %lX\n", notebook, slot); fflush(stdout);
     GtkNotebook *gnotebook = GTK_NOTEBOOK (notebook);
     GtkWidget *tab_label;
 
