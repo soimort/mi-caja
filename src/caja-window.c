@@ -810,6 +810,7 @@ caja_window_open_slot (CajaWindowPane *pane,
 void
 caja_window_close_pane (CajaWindowPane *pane)
 {
+    printf(">>> window closing...\n"); fflush(stdout);
     CajaWindow *window;
 
     g_assert (CAJA_IS_WINDOW_PANE (pane));
