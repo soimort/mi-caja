@@ -162,6 +162,7 @@ caja_window_pane_slot_close (CajaWindowPane *pane, CajaWindowSlot *slot)
         /* If that was the last slot in the active pane, close the pane or even the whole window. */
         if (window->details->active_pane->slots == NULL)
         {
+            printf(">>> last slot\n"); fflush(stdout);
             CajaWindowPane *next_pane;
             next_pane = caja_window_get_next_pane (window);
 
