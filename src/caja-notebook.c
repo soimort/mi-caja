@@ -334,7 +334,7 @@ build_tab_label (CajaNotebook *nb, CajaWindowSlot *slot)
     caja_drag_slot_proxy_init (hbox, drag_info);
 
     g_object_set_data (G_OBJECT (hbox), "label", label);
-    g_object_set_data (G_OBJECT (hbox), "spinner", spinner);
+    //g_object_set_data (G_OBJECT (hbox), "spinner", spinner);
     g_object_set_data (G_OBJECT (hbox), "icon", icon);
     g_object_set_data (G_OBJECT (hbox), "close-button", close_button);
 
@@ -500,4 +500,3 @@ caja_notebook_can_set_current_page_relative (CajaNotebook *notebook,
 
     return caja_notebook_is_valid_relative_position (notebook, offset);
 }
-
