@@ -1,6 +1,6 @@
 # mi-caja
 
-A fork of the caja file manager (1.23.2).
+A fork of the [caja](https://github.com/mate-desktop/caja) file manager (1.23.2).
 
 ## How to build
 
