@@ -198,6 +198,7 @@ caja_notebook_sync_loading (CajaNotebook *notebook,
     tab_label = gtk_notebook_get_tab_label (GTK_NOTEBOOK (notebook), slot->content_box);
     g_return_if_fail (GTK_IS_WIDGET (tab_label));
 
+    return; // no more spinner
     spinner = GTK_WIDGET (g_object_get_data (G_OBJECT (tab_label), "spinner"));
     icon = GTK_WIDGET (g_object_get_data (G_OBJECT (tab_label), "icon"));
     g_return_if_fail (spinner != NULL && icon != NULL);
