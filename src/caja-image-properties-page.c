@@ -91,7 +91,6 @@ typedef struct
     GObjectClass parent;
 } CajaImagePropertiesPageProviderClass;
 
-
 static GType caja_image_properties_page_provider_get_type (void);
 static void  property_page_provider_iface_init                (CajaPropertyPageProviderIface *iface);
 
@@ -473,7 +472,7 @@ file_read_callback (GObject      *object,
     {
         int exif_still_loading;
 
-        g_assert (count_read <= sizeof(page->details->buffer));
+        g_assert (((size_t) count_read) <= sizeof (page->details->buffer));
 
 #ifdef HAVE_EXIF
         exif_still_loading = exif_loader_write (page->details->exifldr,
@@ -717,7 +716,6 @@ property_page_provider_iface_init (CajaPropertyPageProviderIface *iface)
 {
     iface->get_pages = get_property_pages;
 }
-
 
 static void
 caja_image_properties_page_provider_init (CajaImagePropertiesPageProvider *sidebar)

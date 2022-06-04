@@ -67,8 +67,6 @@ typedef struct _CajaWindowPane      CajaWindowPane;
 typedef struct CajaWindowSlotClass CajaWindowSlotClass;
 typedef enum CajaWindowOpenSlotFlags CajaWindowOpenSlotFlags;
 
-GType          caja_window_slot_get_type (void);
-
 typedef enum
 {
     CAJA_WINDOW_NOT_SHOWN,
@@ -150,6 +148,7 @@ void             caja_window_go_to_with_selection (CajaWindow    *window,
         GList             *new_selection);
 void             caja_window_go_home              (CajaWindow    *window);
 void             caja_window_new_tab              (CajaWindow    *window);
+void             caja_window_new_window           (CajaWindow    *window);
 void             caja_window_go_up                (CajaWindow    *window,
         gboolean           close_behind,
         gboolean           new_tab);
@@ -157,8 +156,8 @@ void             caja_window_prompt_for_location  (CajaWindow    *window,
         const char        *initial);
 void             caja_window_display_error        (CajaWindow    *window,
         const char        *error_msg);
-void		 caja_window_reload		      (CajaWindow	 *window);
-
+void             caja_window_reload               (CajaWindow    *window,
+        gboolean           new_tab);
 void             caja_window_allow_reload         (CajaWindow    *window,
         gboolean           allow);
 void             caja_window_allow_up             (CajaWindow    *window,

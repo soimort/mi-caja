@@ -30,9 +30,7 @@
 #include <config.h>
 #include <dlfcn.h>
 #include <signal.h>
-#ifdef HAVE_LOCALE_H
 #include <locale.h>
-#endif
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
@@ -243,10 +241,12 @@ main (int argc, char *argv[])
 		eel_make_warnings_and_criticals_stop_in_debugger ();
 	}
 
+#ifdef ENABLE_NLS
 	/* Initialize gettext support */
 	bindtextdomain (GETTEXT_PACKAGE, MATELOCALEDIR);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 	textdomain (GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
 
 	g_set_prgname ("caja");
 
@@ -277,5 +277,4 @@ main (int argc, char *argv[])
 
 	return retval;
 }
-
 

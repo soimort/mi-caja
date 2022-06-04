@@ -127,8 +127,8 @@ static gboolean caja_path_bar_slider_button_release    (GtkWidget       *widget,
         CajaPathBar *path_bar);
 static void     caja_path_bar_grab_notify              (GtkWidget       *widget,
         gboolean         was_grabbed);
-static void     caja_path_bar_state_changed            (GtkWidget       *widget,
-        GtkStateType     previous_state);
+static void     caja_path_bar_state_flags_changed      (GtkWidget       *widget,
+        GtkStateFlags    previous_state);
 
 static void     caja_path_bar_style_updated            (GtkWidget       *widget);
 
@@ -141,7 +141,6 @@ static void     caja_path_bar_update_button_state      (ButtonData      *button_
 static gboolean caja_path_bar_update_path              (CajaPathBar *path_bar,
         GFile           *file_path,
         gboolean         emit_signal);
-
 
 static GtkWidget *
 get_slider_button (CajaPathBar  *path_bar,
@@ -185,7 +184,6 @@ update_button_types (CajaPathBar *path_bar)
         g_object_unref (path);
     }
 }
-
 
 static void
 desktop_location_changed_callback (gpointer user_data)
@@ -401,7 +399,7 @@ caja_path_bar_class_init (CajaPathBarClass *path_bar_class)
 
     widget_class->screen_changed = caja_path_bar_screen_changed;
     widget_class->grab_notify = caja_path_bar_grab_notify;
-    widget_class->state_changed = caja_path_bar_state_changed;
+    widget_class->state_flags_changed = caja_path_bar_state_flags_changed;
     widget_class->scroll_event = caja_path_bar_scroll;
 
     container_class->add = caja_path_bar_add;
@@ -430,7 +428,6 @@ caja_path_bar_class_init (CajaPathBarClass *path_bar_class)
 
     gtk_container_class_handle_border_width (container_class);
 }
-
 
 static void
 caja_path_bar_finalize (GObject *object)
@@ -547,7 +544,6 @@ caja_path_bar_get_preferred_width (GtkWidget *widget,
     gtk_widget_get_preferred_width (path_bar->up_slider_button,
                                     &slider_width,
                                     NULL);
-
 
     if (path_bar->button_list) {
         *minimum += (path_bar->spacing + slider_width) * 2;
@@ -930,7 +926,6 @@ caja_path_bar_scroll (GtkWidget      *widget,
     return FALSE;
 }
 
-
 static void
 caja_path_bar_add (GtkContainer *container,
                    GtkWidget    *widget)
@@ -1238,16 +1233,14 @@ caja_path_bar_grab_notify (GtkWidget *widget,
 }
 
 static void
-caja_path_bar_state_changed (GtkWidget    *widget,
-                             GtkStateType  previous_state)
+caja_path_bar_state_flags_changed (GtkWidget     *widget,
+                                   GtkStateFlags  previous_state)
 {
     if (!gtk_widget_get_sensitive (widget))
     {
         caja_path_bar_stop_scrolling (CAJA_PATH_BAR (widget));
     }
 }
-
-
 
 /* Changes the icons wherever it is needed */
 static void
@@ -1383,7 +1376,6 @@ button_drag_begin_cb (GtkWidget *widget,
 	g_object_set_data (G_OBJECT (widget), "handle-button-release",
 			   GINT_TO_POINTER (FALSE));
 }
-
 
 static CajaIconInfo *
 get_type_icon_info (ButtonData *button_data)
@@ -1610,21 +1602,18 @@ setup_file_path_mounted_mount (GFile *location, ButtonData *button_data)
         {
             result = TRUE;
             /* set mount specific details in button_data */
-            if (button_data)
+            icon = g_mount_get_icon (mount);
+            if (icon == NULL)
             {
-                icon = g_mount_get_icon (mount);
-                if (icon == NULL)
-                {
-                    icon = g_themed_icon_new (CAJA_ICON_FOLDER);
-                }
-                info = caja_icon_info_lookup (icon, CAJA_PATH_BAR_ICON_SIZE, scale);
-                g_object_unref (icon);
-                button_data->custom_icon = caja_icon_info_get_surface_at_size (info, CAJA_PATH_BAR_ICON_SIZE);
-                g_object_unref (info);
-                button_data->dir_name = g_mount_get_name (mount);
-                button_data->type = MOUNT_BUTTON;
-                button_data->fake_root = TRUE;
+                icon = g_themed_icon_new (CAJA_ICON_FOLDER);
             }
+            info = caja_icon_info_lookup (icon, CAJA_PATH_BAR_ICON_SIZE, scale);
+            g_object_unref (icon);
+            button_data->custom_icon = caja_icon_info_get_surface_at_size (info, CAJA_PATH_BAR_ICON_SIZE);
+            g_object_unref (info);
+            button_data->dir_name = g_mount_get_name (mount);
+            button_data->type = MOUNT_BUTTON;
+            button_data->fake_root = TRUE;
             g_object_unref (root);
             break;
         }
@@ -1634,20 +1623,17 @@ setup_file_path_mounted_mount (GFile *location, ButtonData *button_data)
         {
             result = TRUE;
             /* set mount specific details in button_data */
-            if (button_data)
+            icon = g_mount_get_icon (mount);
+            if (icon == NULL)
             {
-                icon = g_mount_get_icon (mount);
-                if (icon == NULL)
-                {
-                    icon = g_themed_icon_new (CAJA_ICON_FOLDER);
-                }
-                info = caja_icon_info_lookup (icon, CAJA_PATH_BAR_ICON_SIZE, scale);
-                g_object_unref (icon);
-                button_data->custom_icon = caja_icon_info_get_surface_at_size (info, CAJA_PATH_BAR_ICON_SIZE);
-                g_object_unref (info);
-                button_data->type = DEFAULT_LOCATION_BUTTON;
-                button_data->fake_root = TRUE;
+                icon = g_themed_icon_new (CAJA_ICON_FOLDER);
             }
+            info = caja_icon_info_lookup (icon, CAJA_PATH_BAR_ICON_SIZE, scale);
+            g_object_unref (icon);
+            button_data->custom_icon = caja_icon_info_get_surface_at_size (info, CAJA_PATH_BAR_ICON_SIZE);
+            g_object_unref (info);
+            button_data->type = DEFAULT_LOCATION_BUTTON;
+            button_data->fake_root = TRUE;
             g_object_unref (default_location);
             g_object_unref (root);
             break;
@@ -1955,7 +1941,7 @@ make_directory_button (CajaPathBar  *path_bar,
                               button_data);
     }
 
-    button_data->file_is_hidden = file_is_hidden;
+    button_data->file_is_hidden = (file_is_hidden != FALSE);
 
     gtk_container_add (GTK_CONTAINER (button_data->button), child);
     gtk_widget_show_all (button_data->button);

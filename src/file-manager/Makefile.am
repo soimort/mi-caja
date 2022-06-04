@@ -4,10 +4,13 @@ noinst_LTLIBRARIES=libcaja-file-manager.la
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir) \
+	-I$(top_srcdir)/mate-submodules \
 	$(CORE_CFLAGS) \
-	$(WARNING_CFLAGS) \
+	$(WARN_CFLAGS) \
 	-DCAJA_DATADIR=\""$(datadir)/caja"\" \
 	-DDATADIR=\""$(datadir)"\" \
+	-DICONDIR=\""$(datadir)/icons"\" \
+	-DPIXMAPDIR=\""$(datadir)/pixmaps"\" \
 	$(DISABLE_DEPRECATED_CFLAGS) \
 	$(NULL)
 

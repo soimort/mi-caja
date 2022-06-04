@@ -32,9 +32,6 @@
 
 #define CAJA_TYPE_MODULE    	(caja_module_get_type ())
 #define CAJA_MODULE(obj)		(G_TYPE_CHECK_INSTANCE_CAST ((obj), CAJA_TYPE_MODULE, CajaModule))
-#define CAJA_MODULE_CLASS(klass)	(G_TYPE_CHECK_CLASS_CAST ((klass), CAJA_TYPE_MODULE, CajaModule))
-#define CAJA_IS_MODULE(obj)		(G_TYPE_INSTANCE_CHECK_TYPE ((obj), CAJA_TYPE_MODULE))
-#define CAJA_IS_MODULE_CLASS(klass)	(G_TYPE_CLASS_CHECK_CLASS_TYPE ((klass), CAJA_TYPE_MODULE))
 
 typedef struct _CajaModule        CajaModule;
 typedef struct _CajaModuleClass   CajaModuleClass;
@@ -184,12 +181,14 @@ add_module_objects (CajaModule *module)
 
         if (module->list_pyfiles)
         {
-            filename = g_strconcat(g_list_nth_data(pyfiles, i), ".py", NULL);
+           g_free (filename);
+           filename = g_strconcat (g_list_nth_data (pyfiles, i), ".py", NULL);
         }
 
         object = caja_module_add_type (types[i]);
         caja_extension_register (filename, object);
     }
+    g_free (filename);
 }
 
 static CajaModule *
@@ -234,6 +233,7 @@ load_module_dir (const char *dirname)
                                              name,
                                              NULL);
                 caja_module_load_file (filename);
+                g_free (filename);
             }
         }
         g_dir_close (dir);
@@ -261,7 +261,19 @@ caja_module_setup (void)
 
     if (!initialized)
     {
+        const gchar *caja_extension_dirs = g_getenv ("CAJA_EXTENSION_DIRS");
+
         initialized = TRUE;
+
+        if (caja_extension_dirs)
+        {
+            gchar **dir_vector = g_strsplit (caja_extension_dirs, G_SEARCHPATH_SEPARATOR_S, 0);
+
+            for (gchar **dir = dir_vector; *dir != NULL; ++ dir)
+                load_module_dir (*dir);
+
+            g_strfreev(dir_vector);
+        }
 
         load_module_dir (CAJA_EXTENSIONDIR);
 

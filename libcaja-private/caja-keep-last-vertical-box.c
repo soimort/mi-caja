@@ -26,14 +26,10 @@
 #include <config.h>
 #include "caja-keep-last-vertical-box.h"
 
-static void     caja_keep_last_vertical_box_class_init  (CajaKeepLastVerticalBoxClass *class);
-static void     caja_keep_last_vertical_box_init        (CajaKeepLastVerticalBox      *box);
 static void	caja_keep_last_vertical_box_size_allocate 	  (GtkWidget 			    *widget,
         GtkAllocation 		    *allocation);
 
 G_DEFINE_TYPE (CajaKeepLastVerticalBox, caja_keep_last_vertical_box, GTK_TYPE_BOX)
-
-#define parent_class caja_keep_last_vertical_box_parent_class
 
 /* Standard class initialization function */
 static void
@@ -52,7 +48,6 @@ caja_keep_last_vertical_box_init (CajaKeepLastVerticalBox *box)
 {
     gtk_orientable_set_orientation (GTK_ORIENTABLE (box), GTK_ORIENTATION_VERTICAL);
 }
-
 
 /* caja_keep_last_vertical_box_new:
  *

@@ -52,9 +52,6 @@ static GQuark attribute_name_q,
        attribute_modification_date_q,
        attribute_date_modified_q;
 
-/* msec delay after Loading... dummy row turns into (empty) */
-#define LOADING_TO_EMPTY_DELAY 100
-
 static guint list_model_signals[LAST_SIGNAL] = { 0 };
 
 static int fm_list_model_file_entry_compare_func (gconstpointer a,
@@ -237,7 +234,6 @@ fm_list_model_get_path (GtkTreeModel *tree_model, GtkTreeIter *iter)
     FMListModel *model;
     GSequenceIter *ptr;
     FileEntry *file_entry;
-
 
     model = (FMListModel *)tree_model;
 
@@ -663,7 +659,6 @@ lookup_file (FMListModel *model, CajaFile *file,
     return ptr;
 }
 
-
 struct GetIters
 {
     FMListModel *model;
@@ -736,7 +731,6 @@ fm_list_model_get_first_iter_for_file (FMListModel          *model,
 
     return res;
 }
-
 
 gboolean
 fm_list_model_get_tree_iter_from_file (FMListModel *model, CajaFile *file,
@@ -1124,7 +1118,6 @@ fm_list_model_add_file (FMListModel *model, CajaFile *file,
         }
     }
 
-
     file_entry->ptr = g_sequence_insert_sorted (files, file_entry,
                       fm_list_model_file_entry_compare_func, model);
 
@@ -1173,7 +1166,6 @@ fm_list_model_file_changed (FMListModel *model, CajaFile *file,
     {
         return;
     }
-
 
     pos_before = g_sequence_iter_get_position (ptr);
 
@@ -1495,8 +1487,6 @@ fm_list_model_unload_subdirectory (FMListModel *model, GtkTreeIter *iter)
     g_hash_table_destroy (file_entry->reverse_map);
     file_entry->reverse_map = NULL;
 }
-
-
 
 void
 fm_list_model_set_should_sort_directories_first (FMListModel *model, gboolean sort_directories_first)

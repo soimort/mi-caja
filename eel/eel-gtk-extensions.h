@@ -45,7 +45,6 @@ void                  eel_gtk_window_set_initial_geometry_from_string (GtkWindow
         gboolean		     ignore_position);
 char *                eel_gtk_window_get_geometry_string              (GtkWindow            *window);
 
-
 /* GtkMenu and GtkMenuItem */
 void                  eel_pop_up_context_menu                         (GtkMenu              *menu,
         GdkEventButton       *event);
@@ -73,7 +72,6 @@ GtkWidget *           eel_image_menu_item_new_from_icon               (const gch
 GtkWidget *           eel_image_menu_item_new_from_surface              (cairo_surface_t    *icon_surface,
                                                                          const gchar        *label_name);
 
-gboolean              eel_dialog_page_scroll_event_callback           (GtkWidget            *widget,
-                                                                       GdkEventScroll       *event,
-                                                                       GtkWindow            *window);
+gboolean              eel_notebook_scroll_event_cb                    (GtkWidget            *widget,
+                                                                       GdkEventScroll       *event);
 #endif /* EEL_GTK_EXTENSIONS_H */

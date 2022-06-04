@@ -22,6 +22,9 @@
    Author: Darin Adler <darin@bentspoon.com>
 */
 
+#ifndef __CAJA_DIRECTORY_PRIVATE_H__
+#define __CAJA_DIRECTORY_PRIVATE_H__
+
 #include <gio/gio.h>
 #include <libxml/tree.h>
 
@@ -222,8 +225,6 @@ FileMonitors *     caja_directory_remove_file_monitors            (CajaDirectory
 void               caja_directory_add_file_monitors               (CajaDirectory         *directory,
         CajaFile              *file,
         FileMonitors              *monitors);
-void               caja_directory_add_file                        (CajaDirectory         *directory,
-        CajaFile              *file);
 GList *            caja_directory_begin_file_name_change          (CajaDirectory         *directory,
         CajaFile              *file);
 void               caja_directory_end_file_name_change            (CajaDirectory         *directory,
@@ -240,3 +241,6 @@ void               caja_directory_remove_file_from_work_queue     (CajaDirectory
 
 /* debugging functions */
 int                caja_directory_number_outstanding              (void);
+
+#endif	/* __CAJA_DIRECTORY_PRIVATE_H__ */
+

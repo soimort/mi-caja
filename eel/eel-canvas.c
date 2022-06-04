@@ -86,7 +86,6 @@ static void redraw_and_repick_if_mapped (EelCanvasItem *item);
 
 /* Some convenience stuff */
 #define GCI_UPDATE_MASK (EEL_CANVAS_UPDATE_REQUESTED | EEL_CANVAS_UPDATE_DEEP)
-#define GCI_EPSILON 1e-18
 
 enum
 {
@@ -112,7 +111,6 @@ static GObjectClass *item_parent_class;
 
 static gpointer accessible_item_parent_class;
 static gpointer accessible_parent_class;
-
 
 /**
  * eel_canvas_item_get_type:
@@ -192,7 +190,6 @@ eel_canvas_item_new (EelCanvasGroup *parent, GType type, const gchar *first_arg_
 
     return item;
 }
-
 
 /* Performs post-creation operations on a canvas item (adding it to its parent
  * group, etc.)
@@ -292,7 +289,6 @@ eel_canvas_item_construct (EelCanvasItem *item, EelCanvasGroup *parent,
 
     item_post_create_setup (item);
 }
-
 
 static void
 redraw_and_repick_if_mapped (EelCanvasItem *item)
@@ -492,7 +488,6 @@ eel_canvas_item_set (EelCanvasItem *item, const gchar *first_arg_name, ...)
     va_end (args);
 }
 
-
 /**
  * eel_canvas_item_set_valist:
  * @item: A canvas item.
@@ -511,7 +506,6 @@ eel_canvas_item_set_valist (EelCanvasItem *item, const gchar *first_arg_name, va
 
     item->canvas->need_repick = TRUE;
 }
-
 
 /**
  * eel_canvas_item_move:
@@ -619,7 +613,6 @@ put_item_after (GList *link, GList *before)
     return TRUE;
 }
 
-
 /**
  * eel_canvas_item_raise:
  * @item: A canvas item.
@@ -656,7 +649,6 @@ eel_canvas_item_raise (EelCanvasItem *item, int positions)
         redraw_and_repick_if_mapped (item);
     }
 }
-
 
 /**
  * eel_canvas_item_lower:
@@ -695,7 +687,6 @@ eel_canvas_item_lower (EelCanvasItem *item, int positions)
     }
 }
 
-
 /**
  * eel_canvas_item_raise_to_top:
  * @item: A canvas item.
@@ -722,7 +713,6 @@ eel_canvas_item_raise_to_top (EelCanvasItem *item)
         redraw_and_repick_if_mapped (item);
     }
 }
-
 
 /**
  * eel_canvas_item_lower_to_bottom:
@@ -836,7 +826,6 @@ eel_canvas_item_show (EelCanvasItem *item)
         eel_canvas_queue_resize (item->canvas);
     }
 }
-
 
 /**
  * eel_canvas_item_hide:
@@ -988,7 +977,6 @@ eel_canvas_item_w2i (EelCanvasItem *item, double *x, double *y)
     }
 }
 
-
 /**
  * eel_canvas_item_i2w:
  * @item: A canvas item.
@@ -1113,7 +1101,6 @@ eel_canvas_item_grab_focus (EelCanvasItem *item)
     }
 }
 
-
 /**
  * eel_canvas_item_get_bounds:
  * @item: A canvas item.
@@ -1153,7 +1140,6 @@ eel_canvas_item_get_bounds (EelCanvasItem *item, double *x1, double *y1, double 
     if (y2)
         *y2 = ty2;
 }
-
 
 /**
  * eel_canvas_item_request_update
@@ -1203,10 +1189,7 @@ eel_canvas_item_request_redraw (EelCanvasItem *item)
                                    item->x2 + 1, item->y2 + 1);
 }
 
-
-
 /*** EelCanvasGroup ***/
-
 
 enum
 {
@@ -1214,7 +1197,6 @@ enum
     GROUP_PROP_X,
     GROUP_PROP_Y
 };
-
 
 static void eel_canvas_group_class_init  (EelCanvasGroupClass *klass);
 static void eel_canvas_group_init        (EelCanvasGroup      *group);
@@ -1246,9 +1228,7 @@ static void   eel_canvas_group_translate   (EelCanvasItem *item, double dx, doub
 static void   eel_canvas_group_bounds      (EelCanvasItem *item, double *x1, double *y1,
         double *x2, double *y2);
 
-
 static EelCanvasItemClass *group_parent_class;
-
 
 /**
  * eel_canvas_group_get_type:
@@ -1276,7 +1256,6 @@ eel_canvas_group_get_type (void)
             sizeof (EelCanvasGroup),
             0,              /* n_preallocs */
             (GInstanceInitFunc) eel_canvas_group_init
-
 
         };
 
@@ -1808,9 +1787,7 @@ group_remove (EelCanvasGroup *group, EelCanvasItem *item)
         }
 }
 
-
 /*** EelCanvas ***/
-
 
 enum
 {
@@ -2861,7 +2838,6 @@ eel_canvas_key (GtkWidget *widget, GdkEventKey *event)
         return GTK_WIDGET_CLASS (canvas_parent_class)->key_press_event (widget, event);
 }
 
-
 /* Crossing event handler for the canvas */
 static gint
 eel_canvas_crossing (GtkWidget *widget, GdkEventCrossing *event)
@@ -2925,7 +2901,6 @@ eel_cairo_get_clip_region (cairo_t *cr)
             return NULL;
         return cairo_region_create_rectangle (&clip_rect);
     }
-
 
     region = cairo_region_create ();
     for (i = list->num_rectangles - 1; i >= 0; --i) {
@@ -3132,7 +3107,6 @@ eel_canvas_root (EelCanvas *canvas)
     return EEL_CANVAS_GROUP (canvas->root);
 }
 
-
 /**
  * eel_canvas_set_scroll_region:
  * @canvas: A canvas.
@@ -3192,7 +3166,6 @@ eel_canvas_set_scroll_region (EelCanvas *canvas, double x1, double y1, double x2
     }
 }
 
-
 /**
  * eel_canvas_get_scroll_region:
  * @canvas: A canvas.
@@ -3238,7 +3211,6 @@ eel_canvas_set_center_scroll_region (EelCanvas *canvas,
                gtk_adjustment_get_value (hadjustment),
                gtk_adjustment_get_value (vadjustment));
 }
-
 
 /**
  * eel_canvas_set_pixels_per_unit:
@@ -3519,8 +3491,6 @@ eel_canvas_w2c_rect_d (EelCanvas *canvas,
                       x2, y2);
 }
 
-
-
 /**
  * eel_canvas_w2c_d:
  * @canvas: A canvas.
@@ -3547,7 +3517,6 @@ eel_canvas_w2c_d (EelCanvas *canvas, double wx, double wy, double *cx, double *c
         *cy = (wy - canvas->scroll_y1)*zoom + canvas->zoom_yofs;
 }
 
-
 /**
  * eel_canvas_c2w:
  * @canvas: A canvas.
@@ -3572,7 +3541,6 @@ eel_canvas_c2w (EelCanvas *canvas, int cx, int cy, double *wx, double *wy)
     if (wy)
         *wy = (cy - canvas->zoom_yofs)/zoom + canvas->scroll_y1;
 }
-
 
 /**
  * eel_canvas_window_to_world:
@@ -3602,7 +3570,6 @@ eel_canvas_window_to_world (EelCanvas *canvas, double winx, double winy,
         *worldy = canvas->scroll_y1 + ((winy - canvas->zoom_yofs)
                                        / canvas->pixels_per_unit);
 }
-
 
 /**
  * eel_canvas_world_to_window:
@@ -3724,7 +3691,6 @@ eel_canvas_item_accessible_is_item_in_window (EelCanvasItem *item,
     }
     return retval;
 }
-
 
 static void
 eel_canvas_item_accessible_get_extents (AtkComponent *component,
@@ -3977,19 +3943,19 @@ eel_canvas_item_accessible_factory_create_accessible (GObject *obj)
     return accessible;
 }
 
-static void
-eel_canvas_item_accessible_factory_class_init (AtkObjectFactoryClass *klass)
-{
-    klass->create_accessible = eel_canvas_item_accessible_factory_create_accessible;
-    klass->get_accessible_type = eel_canvas_item_accessible_factory_get_accessible_type;
-}
-
 static GType eel_canvas_item_accessible_factory_get_type (void);
 
 typedef AtkObjectFactory EelCanvasItemAccessibleFactory;
 typedef AtkObjectFactoryClass EelCanvasItemAccessibleFactoryClass;
 G_DEFINE_TYPE (EelCanvasItemAccessibleFactory, eel_canvas_item_accessible_factory,
                ATK_TYPE_OBJECT_FACTORY)
+
+static void
+eel_canvas_item_accessible_factory_class_init (AtkObjectFactoryClass *klass)
+{
+    klass->create_accessible = eel_canvas_item_accessible_factory_create_accessible;
+    klass->get_accessible_type = eel_canvas_item_accessible_factory_get_accessible_type;
+}
 
 static void
 eel_canvas_item_accessible_factory_init (EelCanvasItemAccessibleFactory *accessible)

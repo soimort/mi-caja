@@ -803,13 +803,14 @@ real_merge_menus (FMDirectoryView *view)
 
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
     action_group = gtk_action_group_new ("DesktopViewActions");
+#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
     desktop_view->priv->desktop_action_group = action_group;
     gtk_action_group_add_actions (action_group,
                                   desktop_view_entries, G_N_ELEMENTS (desktop_view_entries),
                                   view);
     G_GNUC_END_IGNORE_DEPRECATIONS;
-
 
     gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
     g_object_unref (action_group); /* owned by ui manager */

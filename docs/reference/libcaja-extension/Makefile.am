@@ -37,7 +37,6 @@ CFILE_GLOB=$(top_srcdir)/libcaja-extension/*.c
 # Header files to ignore when scanning.
 IGNORE_HFILES = \
 	config.h \
-	caja-extension-i18n.h \
 	$(NULL)
 
 # Images to copy into HTML directory
@@ -75,6 +74,8 @@ GTKDOC_LIBS = \
 
 # This includes the standard gtk-doc make rules, copied by gtkdocize.
 include $(top_srcdir)/gtk-doc.make
+
+DISTCLEANFILES = $(DOC_MODULE).actions
 
 # Other files to distribute
 # e.g. EXTRA_DIST += version.xml.in

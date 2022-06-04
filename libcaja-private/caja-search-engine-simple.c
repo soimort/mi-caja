@@ -54,7 +54,6 @@ typedef struct
     gint64 size;
 } SearchThreadData;
 
-
 struct CajaSearchEngineSimpleDetails
 {
     CajaQuery *query;
@@ -63,10 +62,6 @@ struct CajaSearchEngineSimpleDetails
 
     gboolean query_finished;
 };
-
-
-static void  caja_search_engine_simple_class_init       (CajaSearchEngineSimpleClass *class);
-static void  caja_search_engine_simple_init             (CajaSearchEngineSimple      *engine);
 
 G_DEFINE_TYPE (CajaSearchEngineSimple,
                caja_search_engine_simple,
@@ -177,7 +172,6 @@ typedef struct
     SearchThreadData *thread_data;
 } SearchHits;
 
-
 static gboolean
 search_thread_add_hits_idle (gpointer user_data)
 {
@@ -222,7 +216,6 @@ send_batch (SearchThreadData *data)
 	G_FILE_ATTRIBUTE_STANDARD_IS_HIDDEN "," \
 	G_FILE_ATTRIBUTE_STANDARD_TYPE "," \
 	G_FILE_ATTRIBUTE_ID_FILE
-
 
 /* Stolen code
  * file: glocalfileinfo.c
@@ -346,7 +339,7 @@ file_has_all_tags (GFileInfo *info, GList *tags)
 }
 
 static inline gboolean
-check_odt2txt () {
+check_odt2txt (void) {
     gboolean rc = TRUE;
     int exit = 0;
     gchar *output = NULL;
@@ -624,7 +617,6 @@ next:
     g_object_unref (enumerator);
 }
 
-
 static gpointer
 search_thread_func (gpointer user_data)
 {
@@ -752,7 +744,6 @@ caja_search_engine_simple_init (CajaSearchEngineSimple *engine)
 {
     engine->details = g_new0 (CajaSearchEngineSimpleDetails, 1);
 }
-
 
 CajaSearchEngine *
 caja_search_engine_simple_new (void)

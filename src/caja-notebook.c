@@ -42,15 +42,19 @@
 
 #define AFTER_ALL_TABS -1
 
-static void caja_notebook_init		 (CajaNotebook *notebook);
-static void caja_notebook_class_init	 (CajaNotebookClass *klass);
-static int  caja_notebook_insert_page	 (GtkNotebook *notebook,
-        GtkWidget *child,
-        GtkWidget *tab_label,
-        GtkWidget *menu_label,
-        int position);
-static void caja_notebook_remove	 (GtkContainer *container,
-                                      GtkWidget *tab_widget);
+static void caja_notebook_constructed (GObject *object);
+
+static int caja_notebook_insert_page (GtkNotebook *notebook,
+                                      GtkWidget   *child,
+                                      GtkWidget   *tab_label,
+                                      GtkWidget   *menu_label,
+                                      int          position);
+
+static void caja_notebook_remove (GtkContainer  *container,
+                                  GtkWidget     *tab_widget);
+
+static gboolean caja_notebook_scroll_event (GtkWidget      *widget,
+                                            GdkEventScroll *event);
 
 enum
 {
@@ -67,9 +71,14 @@ caja_notebook_class_init (CajaNotebookClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
     GtkContainerClass *container_class = GTK_CONTAINER_CLASS (klass);
+    GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
     GtkNotebookClass *notebook_class = GTK_NOTEBOOK_CLASS (klass);
 
+    object_class->constructed = caja_notebook_constructed;
+
     container_class->remove = caja_notebook_remove;
+
+    widget_class->scroll_event = caja_notebook_scroll_event;
 
     notebook_class->insert_page = caja_notebook_insert_page;
 
@@ -183,6 +192,17 @@ caja_notebook_init (CajaNotebook *notebook)
     g_signal_connect (notebook, "page-removed", (GCallback)caja_workspace_remove_page, NULL);
     g_signal_connect (notebook, "page-reordered", (GCallback)caja_workspace_reorder_page, NULL);
     g_signal_connect (notebook, "switch-page", (GCallback)caja_workspace_switch_page, NULL);
+}
+
+static void
+caja_notebook_constructed (GObject *object)
+{
+    GtkWidget *widget = GTK_WIDGET (object);
+
+    G_OBJECT_CLASS (caja_notebook_parent_class)->constructed (object);
+
+    /* Necessary for scroll events */
+    gtk_widget_add_events (widget, GDK_SCROLL_MASK);
 }
 
 void
@@ -392,7 +412,6 @@ caja_notebook_add_tab (CajaNotebook *notebook,
     caja_notebook_sync_tab_label (notebook, slot);
     caja_notebook_sync_loading (notebook, slot);
 
-
     /* FIXME gtk bug! */
     /* FIXME: this should be fixed in gtk 2.12; check & remove this! */
     /* The signal handler may have reordered the tabs */
@@ -500,4 +519,72 @@ caja_notebook_can_set_current_page_relative (CajaNotebook *notebook,
     g_return_val_if_fail (CAJA_IS_NOTEBOOK (notebook), FALSE);
 
     return caja_notebook_is_valid_relative_position (notebook, offset);
+}
+
+/* Tab scrolling was removed from GtkNotebook in gtk 3, so reimplement it here */
+static gboolean
+caja_notebook_scroll_event (GtkWidget      *widget,
+                            GdkEventScroll *event)
+{
+    GtkNotebook *notebook = GTK_NOTEBOOK (widget);
+    gboolean (* scroll_event) (GtkWidget *, GdkEventScroll *) =
+        GTK_WIDGET_CLASS (caja_notebook_parent_class)->scroll_event;
+    GtkWidget *child, *event_widget, *action_widget;
+
+    if ((event->state & gtk_accelerator_get_default_mod_mask ()) != 0)
+        goto chain_up;
+
+    child = gtk_notebook_get_nth_page (notebook, gtk_notebook_get_current_page (notebook));
+    if (child == NULL)
+        goto chain_up;
+
+    event_widget = gtk_get_event_widget ((GdkEvent *) event);
+
+    /* Ignore scroll events from the content of the page */
+    if (event_widget == NULL || event_widget == child || gtk_widget_is_ancestor (event_widget, child))
+        goto chain_up;
+
+    /* And also from the action widgets */
+    action_widget = gtk_notebook_get_action_widget (notebook, GTK_PACK_START);
+    if (event_widget == action_widget || (action_widget != NULL && gtk_widget_is_ancestor (event_widget, action_widget)))
+        goto chain_up;
+
+    action_widget = gtk_notebook_get_action_widget (notebook, GTK_PACK_END);
+    if (event_widget == action_widget || (action_widget != NULL && gtk_widget_is_ancestor (event_widget, action_widget)))
+        goto chain_up;
+
+    switch (event->direction) {
+        case GDK_SCROLL_RIGHT:
+        case GDK_SCROLL_DOWN:
+            gtk_notebook_next_page (notebook);
+            return TRUE;
+        case GDK_SCROLL_LEFT:
+            case GDK_SCROLL_UP:
+            gtk_notebook_prev_page (notebook);
+            return TRUE;
+        case GDK_SCROLL_SMOOTH:
+            switch (gtk_notebook_get_tab_pos (notebook)) {
+                case GTK_POS_LEFT:
+                case GTK_POS_RIGHT:
+                    if (event->delta_y > 0)
+                        gtk_notebook_next_page (notebook);
+                    else if (event->delta_y < 0)
+                        gtk_notebook_prev_page (notebook);
+                    break;
+                case GTK_POS_TOP:
+                case GTK_POS_BOTTOM:
+                    if (event->delta_x > 0)
+                        gtk_notebook_next_page (notebook);
+                    else if (event->delta_x < 0)
+                        gtk_notebook_prev_page (notebook);
+                    break;
+            }
+            return TRUE;
+    }
+
+chain_up:
+    if (scroll_event)
+        return scroll_event (widget, event);
+
+    return FALSE;
 }

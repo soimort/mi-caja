@@ -366,7 +366,7 @@ static void
 action_reload_callback (GtkAction *action,
                         gpointer user_data)
 {
-    caja_window_reload (CAJA_WINDOW (user_data));
+    caja_window_reload (CAJA_WINDOW (user_data), should_open_in_new_tab ());
 }
 
 static void
@@ -578,15 +578,15 @@ action_about_caja_callback (GtkAction *action,
                                          "files and folders, both on "
                                          "your computer and online."),
                            "copyright", _("Copyright \xC2\xA9 1999-2009 The Nautilus authors\n"
-                                          "Copyright \xC2\xA9 2011-2019 The Caja authors"),
+                                          "Copyright \xC2\xA9 2011-2021 The Caja authors"),
                            "license", license_trans,
                            "wrap-license", TRUE,
                            "authors", authors,
                            "documenters", documenters,
                            "translator-credits", _("translator-credits"),
                            "logo-icon-name", "system-file-manager",
-                           "website", "https://mate-desktop.org",
-                           "website-label", _("MATE Web Site"),
+                           "website", PACKAGE_URL,
+                           "website-label", _("Website"),
                            NULL);
 
     g_strfreev (authors);
@@ -775,7 +775,6 @@ connect_proxy_cb (GtkUIManager *manager,
         g_signal_connect (proxy, "deselect",
                           G_CALLBACK (menu_item_deselect_cb), window);
 
-
         /* This is a way to easily get surfaces into the menu items */
         icon = g_object_get_data (G_OBJECT (action), "menu-icon");
         if (icon != NULL)
@@ -846,10 +845,14 @@ caja_window_initialize_trash_icon_monitor (CajaWindow *window)
 
 static const GtkActionEntry main_entries[] =
 {
-    /* name, icon name, label */ { "File", NULL, N_("_File") },
-    /* name, icon name, label */ { "Edit", NULL, N_("_Edit") },
-    /* name, icon name, label */ { "View", NULL, N_("_View") },
-    /* name, icon name, label */ { "Help", NULL, N_("_Help") },
+    /* name, icon name, label */ { "File", NULL, N_("_File"),
+                                   NULL, NULL, NULL },
+    /* name, icon name, label */ { "Edit", NULL, N_("_Edit"),
+                                   NULL, NULL, NULL },
+    /* name, icon name, label */ { "View", NULL, N_("_View"),
+                                   NULL, NULL, NULL },
+    /* name, icon name, label */ { "Help", NULL, N_("_Help"),
+                                   NULL, NULL, NULL },
     /* name, icon name */        { "Close", "window-close",
         /* label, accelerator */       N_("_Close"), "<control>W",
         /* tooltip */                  N_("Close this folder"),
@@ -990,7 +993,9 @@ caja_window_initialize_menus (CajaWindow *window)
 
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
     action_group = gtk_action_group_new ("ShellActions");
+#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
     window->details->main_action_group = action_group;
     gtk_action_group_add_actions (action_group,
                                   main_entries, G_N_ELEMENTS (main_entries),
@@ -1190,7 +1195,9 @@ caja_window_load_extension_menus (CajaWindow *window)
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
     action_group = gtk_action_group_new ("ExtensionsMenuGroup");
     window->details->extensions_menu_action_group = action_group;
+#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
     G_GNUC_END_IGNORE_DEPRECATIONS;
     gtk_ui_manager_insert_action_group (window->details->ui_manager, action_group, 0);
     g_object_unref (action_group); /* owned by ui manager */
@@ -1200,9 +1207,7 @@ caja_window_load_extension_menus (CajaWindow *window)
     if (items != NULL)
     {
         add_extension_menu_items (window, merge_id, action_group, items, "");
-
-        g_list_foreach (items, (GFunc) g_object_unref, NULL);
-        g_list_free (items);
+        g_list_free_full (items, g_object_unref);
     }
 }
 

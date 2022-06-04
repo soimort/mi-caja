@@ -354,6 +354,17 @@ vfs_file_get_date (CajaFile *file,
             *date = file->details->mtime;
         }
         return TRUE;
+    case CAJA_DATE_TYPE_CREATED:
+        /* Before we have info on a file, the date is unknown. */
+        if (file->details->btime == 0)
+        {
+            return FALSE;
+        }
+        if (date != NULL)
+        {
+            *date = file->details->btime;
+        }
+        return TRUE;
     case CAJA_DATE_TYPE_TRASHED:
         /* Before we have info on a file, the date is unknown. */
         if (file->details->trash_time == 0)
@@ -419,7 +430,6 @@ vfs_file_mount_callback (GObject *source_object,
         g_error_free (error);
     }
 }
-
 
 static void
 vfs_file_mount (CajaFile                   *file,
@@ -608,7 +618,6 @@ vfs_file_start_callback (GObject *source_object,
         g_error_free (error);
     }
 }
-
 
 static void
 vfs_file_start (CajaFile                   *file,

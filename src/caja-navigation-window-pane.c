@@ -37,8 +37,6 @@
 #include "caja-notebook.h"
 #include "caja-window-slot.h"
 
-static void caja_navigation_window_pane_init       (CajaNavigationWindowPane *pane);
-static void caja_navigation_window_pane_class_init (CajaNavigationWindowPaneClass *class);
 static void caja_navigation_window_pane_dispose    (GObject *object);
 
 G_DEFINE_TYPE (CajaNavigationWindowPane,
@@ -108,7 +106,6 @@ search_bar_focus_in_callback (CajaSearchBar *bar,
 {
     caja_window_set_active_pane (pane->window, pane);
 }
-
 
 static void
 search_bar_activate_callback (CajaSearchBar *bar,
@@ -743,7 +740,6 @@ caja_navigation_window_pane_setup (CajaNavigationWindowPane *pane)
      */
     gtk_widget_set_size_request (pane->widget, 60, 60);
 }
-
 
 void
 caja_navigation_window_pane_show_location_bar_temporarily (CajaNavigationWindowPane *pane)

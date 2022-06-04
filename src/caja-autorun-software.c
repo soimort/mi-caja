@@ -22,7 +22,6 @@
    Author: David Zeuthen <davidz@redhat.com>
 */
 
-
 #include <config.h>
 #include <unistd.h>
 #include <string.h>
@@ -226,7 +225,6 @@ present_autorun_for_software_dialog (GMount *mount)
      * etc.)
      */
 
-
     icon = g_mount_get_icon (mount);
     icon_size = caja_get_icon_size_for_stock_size (GTK_ICON_SIZE_DIALOG);
     icon_info = caja_icon_info_lookup (icon, icon_size,
@@ -273,9 +271,11 @@ main (int argc, char *argv[])
     GFile *file;
     GMount *mount;
 
+#ifdef ENABLE_NLS
     bindtextdomain (GETTEXT_PACKAGE, MATELOCALEDIR);
     bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
     textdomain (GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
 
     gtk_init (&argc, &argv);
 

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2011 Red Hat, Inc.
  *               2012 Stefano Karapetsas
+ * Copyright (C) 2012-2021 The MATE developers
  *
  * Caja is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -239,7 +240,7 @@ caja_desktop_update_metadata_from_keyfile (CajaFile *file,
     gsize length, values_length;
     GKeyFile *keyfile;
     GFileInfo *info;
-    gint idx;
+    gsize idx;
     gboolean res;
 
     keyfile = get_keyfile ();

@@ -21,11 +21,14 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
-#include "caja-menu.h"
-#include "caja-extension-i18n.h"
+#endif
 
+#include <glib/gi18n-lib.h>
 #include <glib.h>
+
+#include "caja-menu.h"
 
 /**
  * SECTION:caja-menu
@@ -37,7 +40,6 @@
  * menu. Extensions can provide #CajaMenu objects by attaching them to
  * #CajaMenuItem objects, using caja_menu_item_set_submenu().
  */
-
 
 struct _CajaMenuPrivate {
     GList *item_list;

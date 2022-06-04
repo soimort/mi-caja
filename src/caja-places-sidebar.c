@@ -29,6 +29,7 @@
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
 #include <gio/gio.h>
+#include <gio/gdesktopappinfo.h>
 #include <libnotify/notify.h>
 
 #include <eel/eel-debug.h>
@@ -58,7 +59,6 @@
 #include "caja-window.h"
 
 #define EJECT_BUTTON_XPAD 6
-#define ICON_CELL_XPAD 6
 
 typedef struct
 {
@@ -209,7 +209,6 @@ typedef struct
 } CajaShortcutsModelFilterClass;
 
 #define CAJA_SHORTCUTS_MODEL_FILTER_TYPE (_caja_shortcuts_model_filter_get_type ())
-#define CAJA_SHORTCUTS_MODEL_FILTER(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), CAJA_SHORTCUTS_MODEL_FILTER_TYPE, CajaShortcutsModelFilter))
 
 GType _caja_shortcuts_model_filter_get_type (void);
 static void caja_shortcuts_model_filter_drag_source_iface_init (GtkTreeDragSourceIface *iface);
@@ -563,7 +562,6 @@ update_places (CajaPlacesSidebar *sidebar)
                            location, mount_uri, last_uri,
                            &last_iter, &select_path);
 
-
     /* XDG directories */
     xdg_dirs = NULL;
     for (index = 0; index < G_USER_N_DIRECTORIES; index++) {
@@ -809,7 +807,6 @@ update_places (CajaPlacesSidebar *sidebar)
         g_free (tooltip);
     }
     g_list_free (mounts);
-
 
     /* add bookmarks */
     bookmark_count = caja_bookmark_list_length (sidebar->bookmarks);
@@ -1464,6 +1461,7 @@ reorder_bookmarks (CajaPlacesSidebar *sidebar,
     GtkTreeIter iter;
     PlaceType type;
     int old_position;
+    guint list_length;
 
     /* Get the selected path */
 
@@ -1475,12 +1473,12 @@ reorder_bookmarks (CajaPlacesSidebar *sidebar,
                         PLACES_SIDEBAR_COLUMN_INDEX, &old_position,
                         -1);
 
-    if (type != PLACES_BOOKMARK ||
-            old_position < 0 ||
-            old_position >= caja_bookmark_list_length (sidebar->bookmarks))
-    {
+    if (type != PLACES_BOOKMARK || old_position < 0)
         return;
-    }
+
+    list_length = caja_bookmark_list_length (sidebar->bookmarks);
+    if (((guint) old_position) >= list_length)
+        return;
 
     caja_bookmark_list_move_item (sidebar->bookmarks, old_position,
                                   new_position);
@@ -1737,6 +1735,18 @@ check_visibility (GMount           *mount,
 
         if (*show_stop)
             *show_unmount = FALSE;
+
+        if (volume != NULL)
+        {
+            gchar *unix_device_id;
+            gchar *disks_path;
+
+            unix_device_id = g_volume_get_identifier (volume, G_VOLUME_IDENTIFIER_KIND_UNIX_DEVICE);
+            disks_path = g_find_program_in_path ("gnome-disks");
+            *show_format = (unix_device_id != NULL) && (disks_path != NULL);
+            g_free (unix_device_id);
+            g_free (disks_path);
+        }
     }
 
     if (volume != NULL)
@@ -1842,7 +1852,6 @@ bookmarks_check_popup_sensitivity (CajaPlacesSidebar *sidebar)
         }
     }
 
-
     g_free (uri);
 }
 
@@ -1894,7 +1903,6 @@ volume_mounted_cb (GVolume *volume,
         g_object_unref (G_OBJECT (location));
         g_object_unref (G_OBJECT (mount));
     }
-
 
     eel_remove_weak_pointer (&(sidebar->go_to_after_mount_slot));
 }
@@ -2263,7 +2271,7 @@ volume_eject_cb (GObject *source_object,
     }
 
     else {
-        caja_application_notify_unmount_show ("It is now safe to remove the drive");
+        caja_application_notify_unmount_show (_("It is now safe to remove the drive"));
     }
 }
 
@@ -2299,7 +2307,7 @@ mount_eject_cb (GObject *source_object,
     }
 
     else {
-        caja_application_notify_unmount_show ("It is now safe to remove the drive");
+        caja_application_notify_unmount_show (_("It is now safe to remove the drive"));
     }
 }
 
@@ -2333,7 +2341,7 @@ do_eject (GMount *mount,
                                       g_object_ref (sidebar->window));
     }
 
-    caja_application_notify_unmount_show ("writing data to the drive-do not unplug");
+    caja_application_notify_unmount_show (_("Writing data to the drive -- do not unplug"));
     g_object_unref (mount_op);
 }
 
@@ -2488,10 +2496,37 @@ rescan_shortcut_cb (GtkMenuItem           *item,
 }
 
 static void
-format_shortcut_cb (GtkMenuItem           *item,
+format_shortcut_cb (GtkMenuItem       *item,
                     CajaPlacesSidebar *sidebar)
 {
-    g_spawn_command_line_async ("gfloppy", NULL);
+    GAppInfo *app_info;
+    char *cmdline;
+    char *device_identifier;
+    GtkTreeIter iter;
+    GVolume *volume;
+
+    if (!get_selected_iter (sidebar, &iter))
+    {
+        return;
+    }
+
+    gtk_tree_model_get (GTK_TREE_MODEL (sidebar->filter_model), &iter,
+                        PLACES_SIDEBAR_COLUMN_VOLUME, &volume,
+                        -1);
+
+    device_identifier = g_volume_get_identifier (volume, G_VOLUME_IDENTIFIER_KIND_UNIX_DEVICE);
+
+    cmdline = g_strjoin (" ",
+                         "gnome-disks", "--format-device",
+                         "--block-device", device_identifier,
+                         NULL);
+
+    app_info = g_app_info_create_from_commandline (cmdline, NULL, 0, NULL);
+    g_app_info_launch (app_info, NULL, NULL, NULL);
+
+    g_free (cmdline);
+    g_free (device_identifier);
+    g_clear_object (&app_info);
 }
 
 static void
@@ -2846,15 +2881,15 @@ bookmarks_button_release_event_cb (GtkWidget *widget,
     }
 
     tree_view = GTK_TREE_VIEW (widget);
-    model = gtk_tree_view_get_model (tree_view);
 
     if (event->button == 1)
     {
-
         if (event->window != gtk_tree_view_get_bin_window (tree_view))
         {
             return FALSE;
         }
+
+        model = gtk_tree_view_get_model (tree_view);
 
         gtk_tree_view_get_path_at_pos (tree_view, (int) event->x, (int) event->y,
                                        &path, NULL, NULL, NULL);
@@ -2862,6 +2897,21 @@ bookmarks_button_release_event_cb (GtkWidget *widget,
         open_selected_bookmark (sidebar, model, path, 0);
 
         gtk_tree_path_free (path);
+    }
+    else if (event->button == 3)
+    {
+        gtk_tree_view_get_path_at_pos (tree_view, (int) event->x, (int) event->y,
+                                       &path, NULL, NULL, NULL);
+
+        if (path != NULL)
+        {
+            gtk_tree_view_set_cursor(tree_view, path, NULL, FALSE);
+            gtk_tree_path_free (path);
+
+            bookmarks_popup_menu (sidebar, event);
+
+            return TRUE;
+        }
     }
 
     return FALSE;
@@ -2978,11 +3028,7 @@ bookmarks_button_press_event_cb (GtkWidget             *widget,
         return TRUE;
     }
 
-    if (event->button == 3)
-    {
-        bookmarks_popup_menu (sidebar, event);
-    }
-    else if (event->button == 2)
+    if (event->button == 2)
     {
         GtkTreeModel *model;
         GtkTreePath *path;
@@ -3010,7 +3056,6 @@ bookmarks_button_press_event_cb (GtkWidget             *widget,
 
     return FALSE;
 }
-
 
 static void
 bookmarks_edited (GtkCellRenderer       *cell,

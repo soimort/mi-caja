@@ -272,6 +272,12 @@ caja_window_go_up_signal (CajaWindow *window, gboolean close_behind)
     return TRUE;
 }
 
+static void
+caja_window_reload_signal (CajaWindow *window)
+{
+    caja_window_reload (window, FALSE);
+}
+
 void
 caja_window_new_tab (CajaWindow *window)
 {
@@ -305,6 +311,42 @@ caja_window_new_tab (CajaWindow *window)
     	caja_window_set_active_slot (window, new_slot);
     	caja_window_slot_go_to (new_slot, location, FALSE);
     	g_object_unref (location);
+    }
+}
+
+/*Opens a new window when called from an existing window and goes to the same location that's in the existing window.*/
+void
+caja_window_new_window (CajaWindow *window)
+{
+    CajaWindowSlot *current_slot;
+    GFile *location = NULL;
+    g_return_if_fail (CAJA_IS_WINDOW (window));
+
+    /*Get and set the directory location of current window (slot).*/
+    current_slot = window->details->active_pane->active_slot;
+    location = caja_window_slot_get_location (current_slot);
+
+    if (location != NULL)
+    {
+        CajaWindow *new_window;
+        CajaWindowSlot *new_slot;
+        CajaWindowOpenFlags flags;
+        flags = FALSE;
+
+        /*Create a new window*/
+        new_window = caja_application_create_navigation_window (
+                     window->application,
+        gtk_window_get_screen (GTK_WINDOW (window)));
+
+        /*Create a slot in the new window.*/
+        new_slot = new_window->details->active_pane->active_slot;
+        g_return_if_fail (CAJA_IS_WINDOW_SLOT (new_slot));
+
+        /*Open a directory at the set location in the new window (slot).*/
+        caja_window_slot_open_location_full (new_slot, location,
+                                             CAJA_WINDOW_OPEN_ACCORDING_TO_MODE,
+                                             flags, NULL, NULL, NULL);
+        g_object_unref (location);
     }
 }
 
@@ -437,6 +479,28 @@ caja_window_sync_allow_stop (CajaWindow *window,
 
         EEL_CALL_METHOD (CAJA_WINDOW_CLASS, window,
                          sync_allow_stop, (window, slot));
+    }
+}
+
+void
+caja_window_reload (CajaWindow *window, gboolean new_tab)
+{
+    CajaWindowSlot *slot;
+
+    g_assert (CAJA_IS_WINDOW (window));
+
+    slot = window->details->active_pane->active_slot;
+
+    if (new_tab && slot->location != NULL)
+    {
+        caja_window_slot_open_location_full (slot, slot->location,
+                                             CAJA_WINDOW_OPEN_ACCORDING_TO_MODE,
+                                             CAJA_WINDOW_OPEN_FLAG_NEW_TAB,
+                                             NULL, NULL, NULL);
+    }
+    else
+    {
+        caja_window_slot_reload (slot);
     }
 }
 
@@ -1010,7 +1074,7 @@ caja_window_key_press_event (GtkWidget *widget,
         return TRUE;
 
     CajaWindow *window;
-    int i;
+    gsize i;
 
     window = CAJA_WINDOW (widget);
 
@@ -1051,14 +1115,14 @@ caja_window_key_press_event (GtkWidget *widget,
  */
 
 static void
-free_activate_view_data (gpointer data)
+free_activate_view_data (gpointer  data,
+                         GClosure *closure)
 {
     ActivateViewData *activate_data;
+    (void) closure;
 
     activate_data = data;
-
     g_free (activate_data->id);
-
     g_slice_free (ActivateViewData, activate_data);
 }
 
@@ -1142,7 +1206,7 @@ add_view_as_menu_item (CajaWindow *window,
     data->id = g_strdup (identifier);
     g_signal_connect_data (action, "activate",
                            G_CALLBACK (action_view_as_callback),
-                           data, (GClosureNotify) free_activate_view_data, 0);
+                           data, free_activate_view_data, 0);
 
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
     gtk_action_group_add_action (window->details->view_as_action_group,
@@ -1353,14 +1417,15 @@ load_view_as_menu (CajaWindow *window)
         window->details->view_as_action_group = NULL;
     }
 
-
     refresh_stored_viewers (window);
 
     merge_id = gtk_ui_manager_new_merge_id (window->details->ui_manager);
     window->details->short_list_merge_id = merge_id;
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
     window->details->view_as_action_group = gtk_action_group_new ("ViewAsGroup");
+#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain (window->details->view_as_action_group, GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
     G_GNUC_END_IGNORE_DEPRECATIONS;
     window->details->view_as_radio_action = NULL;
 
@@ -1460,12 +1525,8 @@ real_sync_title (CajaWindow *window,
 {
     if (slot == window->details->active_pane->active_slot)
     {
-        char *copy;
-
-        copy = g_strdup (slot->title);
         g_signal_emit_by_name (window, "title_changed",
                                slot->title);
-        g_free (copy);
     }
 }
 
@@ -1543,7 +1604,6 @@ zoom_level_changed_callback (CajaView *view,
      */
     caja_window_sync_zoom_widgets (window);
 }
-
 
 /* These are called
  *   A) when switching the view within the active slot
@@ -1647,7 +1707,6 @@ caja_window_get_next_pane (CajaWindow *window)
 
     return next_pane;
 }
-
 
 void
 caja_window_slot_set_viewed_file (CajaWindowSlot *slot,
@@ -1913,12 +1972,19 @@ caja_get_history_list (void)
     return history_list;
 }
 
+static gpointer
+caja_window_copy_history_item (gconstpointer src,
+                               gpointer      data)
+{
+    (void) data;
+    return g_object_ref (G_OBJECT (src));
+}
+
 static GList *
 caja_window_get_history (CajaWindow *window)
 {
-    return g_list_copy_deep (history_list, (GCopyFunc) g_object_ref, NULL);
+    return g_list_copy_deep (history_list, caja_window_copy_history_item, NULL);
 }
-
 
 static CajaWindowType
 caja_window_get_window_type (CajaWindow *window)
@@ -2031,7 +2097,6 @@ caja_window_get_extra_slot (CajaWindow *window)
     GList *node;
 
     g_assert (CAJA_IS_WINDOW (window));
-
 
     /* return NULL if there is only one pane */
     if (window->details->panes == NULL ||
@@ -2185,6 +2250,6 @@ caja_window_class_init (CajaWindowClass *class)
                                   "prompt-for-location", 1,
                                   G_TYPE_STRING, "/");
 
-    class->reload = caja_window_reload;
+    class->reload = caja_window_reload_signal;
     class->go_up = caja_window_go_up_signal;
 }

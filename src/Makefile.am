@@ -12,15 +12,15 @@ bin_PROGRAMS = \
 AM_CPPFLAGS = \
 	-I$(top_srcdir) \
 	-I$(top_builddir)/libcaja-private \
+	-I$(top_srcdir)/mate-submodules \
 	$(CORE_CFLAGS) \
-	$(WARNING_CFLAGS) \
+	$(WARN_CFLAGS) \
 	$(EXIF_CFLAGS) \
 	$(EXEMPI_CFLAGS) \
 	-DDATADIR=\""$(datadir)"\" \
 	-DLIBDIR=\""$(libdir)"\" \
 	-DCAJA_DATADIR=\""$(datadir)/caja"\" \
 	-DMATELOCALEDIR=\""$(datadir)/locale"\" \
-	-DUIDIR=\""$(datadir)/caja/ui"\" \
 	-DCAJA_PIXMAPDIR=\""$(datadir)/pixmaps/caja"\" \
 	-DPREFIX=\""$(prefix)"\" \
 	-DSYSCONFDIR=\""$(sysconfdir)"\" \
@@ -51,7 +51,15 @@ $(dbus_freedesktop_built_sources) : Makefile.am $(top_srcdir)/data/freedesktop-d
 		$(top_srcdir)/data/freedesktop-dbus-interfaces.xml			\
 		$(NULL)
 
+caja-resources.c: $(srcdir)/../data/caja-resources.gresource.xml $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir)/../data --generate-dependencies $(srcdir)/../data/caja-resources.gresource.xml)
+	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir)/../data --generate --c-name caja $<
+
+caja-resources.h: $(srcdir)/../data/caja-resources.gresource.xml $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir)/../data --generate-dependencies $(srcdir)/../data/caja-resources.gresource.xml)
+	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir)/../data --generate --c-name caja $<
+
 BUILT_SOURCES = \
+	caja-resources.c \
+	caja-resources.h \
 	caja-src-marshal.c \
 	caja-src-marshal.h \
 	$(dbus_freedesktop_built_sources) \
@@ -62,6 +70,8 @@ caja_SOURCES = \
 	caja-application.h \
 	caja-bookmark-list.c \
 	caja-bookmark-list.h \
+	caja-bookmarks-sidebar.c \
+	caja-bookmarks-sidebar.h \
 	caja-bookmarks-window.c \
 	caja-bookmarks-window.h \
 	caja-connect-server-dialog.c \
@@ -174,6 +184,11 @@ caja_file_management_properties_SOURCES = \
 	caja-file-management-properties-main.c \
 	$(NULL)
 
+nodist_caja_file_management_properties_SOURCES = \
+	caja-resources.c \
+	caja-resources.h \
+	$(NULL)
+
 caja_autorun_software_SOURCES = \
 	caja-autorun-software.c \
 	$(NULL)
@@ -200,18 +215,12 @@ endif
 
 uidir = $(datadir)/caja/ui
 
-ui_files = \
-	caja-file-management-properties.ui \
-	caja-bookmarks-window.ui \
-	$(NULL)
-
 include $(top_srcdir)/gla11y.mk
 
 ui_DATA = \
 	caja-shell-ui.xml \
 	caja-navigation-window-ui.xml \
 	caja-spatial-window-ui.xml \
-	$(ui_files) \
 	$(NULL)
 
 CLEANFILES = \
@@ -226,7 +235,6 @@ EXTRA_DIST = \
 	$(ui_DATA) \
 	check-caja \
 	$(about_DATA) \
-	ui-a11y.suppr \
 	$(NULL)
 
 dist-hook:

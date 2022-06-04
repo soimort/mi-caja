@@ -3,6 +3,7 @@
  * fm-widget-view.c: This file is part of caja.
  *
  * Copyright (C) 2019 Wu Xiaotian <yetist@gmail.com>
+ * Copyright (C) 2019-2021 The MATE developers
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -380,7 +381,6 @@ fm_widget_view_get_id (CajaView *view)
     return FM_WIDGET_VIEW_ID;
 }
 
-
 static void
 fm_widget_view_iface_init (CajaViewIface *iface)
 {
@@ -392,7 +392,6 @@ fm_widget_view_iface_init (CajaViewIface *iface)
     iface->get_title = NULL;
     iface->grab_focus = fm_widget_view_grab_focus;
 }
-
 
 static void
 fm_widget_view_init (FMWidgetView *widget_view)

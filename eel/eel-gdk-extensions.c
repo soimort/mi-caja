@@ -37,8 +37,6 @@
 #include <stdlib.h>
 #include <pango/pango.h>
 
-#define GRADIENT_BAND_SIZE 4
-
 /**
  * eel_gradient_new
  * @start_color: Color for the top or left.
@@ -396,7 +394,6 @@ eel_gdk_rgb_to_rgba (guint32 color)
     return result;
 }
 
-
 /**
  * eel_gdk_rgb_to_color_spec
  * @color: a gdk_rgb style value.
@@ -411,7 +408,6 @@ eel_gdk_rgb_to_color_spec (const guint32 color)
 {
     return g_strdup_printf ("#%06X", (guint) (color & 0xFFFFFF));
 }
-
 
 /**
  * eel_gdk_rgba_is_dark:

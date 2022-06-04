@@ -122,13 +122,6 @@ struct SelectionForeachData
     GtkTreeSelection *selection;
 };
 
-/*
- * The row height should be large enough to not clip emblems.
- * Computing this would be costly, so we just choose a number
- * that works well with the set of emblems we've designed.
- */
-#define LIST_VIEW_MINIMUM_ROW_HEIGHT	28
-
 /* We wait two seconds after row is collapsed to unload the subdirectory */
 #define COLLAPSE_TO_UNLOAD_DELAY 2
 
@@ -159,7 +152,6 @@ static void   fm_list_view_rename_callback                 (CajaFile      *file,
         GFile             *result_location,
         GError            *error,
         gpointer           callback_data);
-
 
 G_DEFINE_TYPE_WITH_CODE (FMListView, fm_list_view, FM_TYPE_DIRECTORY_VIEW,
                          G_IMPLEMENT_INTERFACE (CAJA_TYPE_VIEW,
@@ -252,7 +244,6 @@ activate_selected_items (FMListView *view)
     GList *file_list;
 
     file_list = fm_list_view_get_selection (FM_DIRECTORY_VIEW (view));
-
 
     if (view->details->renaming_file)
     {
@@ -1058,7 +1049,6 @@ row_collapsed_callback (GtkTreeView *treeview, GtkTreeIter *iter, GtkTreePath *p
                             -1);
     }
 
-
     uri = caja_file_get_uri (file);
     caja_debug_log (FALSE, CAJA_DEBUG_LOG_DOMAIN_USER,
                     "list view row collapsed window=%p: %s",
@@ -1306,11 +1296,11 @@ sort_column_changed_callback (GtkTreeSortable *sortable,
         if (sort_attr == default_sort_attr)
         {
             /* use value from preferences */
-            reversed = g_settings_get_boolean (caja_preferences, CAJA_PREFERENCES_DEFAULT_SORT_IN_REVERSE_ORDER);
+            reversed = (g_settings_get_boolean (caja_preferences, CAJA_PREFERENCES_DEFAULT_SORT_IN_REVERSE_ORDER) != FALSE);
         }
         else
         {
-            reversed = caja_file_is_date_sort_attribute_q (sort_attr);
+            reversed = (caja_file_is_date_sort_attribute_q (sort_attr) != FALSE);
         }
 
         if (reversed)
@@ -1322,7 +1312,6 @@ sort_column_changed_callback (GtkTreeSortable *sortable,
             g_signal_handlers_unblock_by_func (sortable, sort_column_changed_callback, view);
         }
     }
-
 
     reversed_attr = (reversed ? "true" : "false");
     caja_file_set_metadata (file, CAJA_METADATA_KEY_LIST_VIEW_SORT_REVERSED,
@@ -1856,7 +1845,6 @@ create_and_set_up_tree_view (FMListView *view)
     gtk_widget_show (GTK_WIDGET (view->details->tree_view));
     gtk_container_add (GTK_CONTAINER (view), GTK_WIDGET (view->details->tree_view));
 
-
     atk_obj = gtk_widget_get_accessible (GTK_WIDGET (view->details->tree_view));
     atk_object_set_name (atk_obj, _("List View"));
 }
@@ -2119,7 +2107,6 @@ fm_list_view_rename_callback (CajaFile *file,
     g_object_unref (view);
 }
 
-
 static void
 fm_list_view_file_changed (FMDirectoryView *view, CajaFile *file, CajaDirectory *directory)
 {
@@ -2226,7 +2213,6 @@ fm_list_view_get_selection_for_file_transfer_foreach_func (GtkTreeModel *model, 
     }
 }
 
-
 static GList *
 fm_list_view_get_selection_for_file_transfer (FMDirectoryView *view)
 {
@@ -2240,9 +2226,6 @@ fm_list_view_get_selection_for_file_transfer (FMDirectoryView *view)
 
     return g_list_reverse (selection_data.list);
 }
-
-
-
 
 static guint
 fm_list_view_get_item_count (FMDirectoryView *view)
@@ -2340,7 +2323,6 @@ fm_list_view_remove_file (FMDirectoryView *view, CajaFile *file, CajaDirectory *
             gtk_tree_row_reference_free (row_reference);
         }
     }
-
 
 }
 
@@ -2655,7 +2637,9 @@ fm_list_view_merge_menus (FMDirectoryView *view)
 
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
     action_group = gtk_action_group_new ("ListViewActions");
+#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
     list_view->details->list_action_group = action_group;
     gtk_action_group_add_actions (action_group,
                                   list_view_entries, G_N_ELEMENTS (list_view_entries),
@@ -3399,7 +3383,6 @@ fm_list_view_get_id (CajaView *view)
     return FM_LIST_VIEW_ID;
 }
 
-
 static void
 fm_list_view_iface_init (CajaViewIface *iface)
 {
@@ -3410,7 +3393,6 @@ fm_list_view_iface_init (CajaViewIface *iface)
     iface->scroll_to_file = list_view_scroll_to_file;
     iface->get_title = NULL;
 }
-
 
 static void
 fm_list_view_init (FMListView *list_view)

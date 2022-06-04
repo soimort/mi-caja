@@ -65,7 +65,6 @@
 
 static void                  schedule_refresh_go_menu                      (CajaNavigationWindow   *window);
 
-
 static void
 action_close_all_windows_callback (GtkAction *action,
                                    gpointer user_data)
@@ -201,8 +200,6 @@ action_show_hide_toolbar_callback (GtkAction *action,
     }
     G_GNUC_END_IGNORE_DEPRECATIONS;
 }
-
-
 
 static void
 action_show_hide_sidebar_callback (GtkAction *action,
@@ -607,13 +604,9 @@ action_new_window_callback (GtkAction *action,
                             gpointer user_data)
 {
     CajaWindow *current_window;
-    CajaWindow *new_window;
 
     current_window = CAJA_WINDOW (user_data);
-    new_window = caja_application_create_navigation_window (
-                     current_window->application,
-                     gtk_window_get_screen (GTK_WINDOW (current_window)));
-    caja_window_go_home (new_window);
+    caja_window_new_window (current_window);
 }
 
 static void
@@ -827,9 +820,15 @@ action_tab_change_action_activate_callback (GtkAction *action, gpointer user_dat
 
 static const GtkActionEntry navigation_entries[] =
 {
-    /* name, icon name, label */ { "Go", NULL, N_("_Go") },
-    /* name, icon name, label */ { "Bookmarks", NULL, N_("_Bookmarks") },
-    /* name, icon name, label */ { "Tabs", NULL, N_("_Tabs") },
+    /* name, icon name, label */ { "Go", NULL, N_("_Go"),
+        NULL, NULL, NULL
+    },
+    /* name, icon name, label */ { "Bookmarks", NULL, N_("_Bookmarks"),
+        NULL, NULL, NULL
+    },
+    /* name, icon name, label */ { "Tabs", NULL, N_("_Tabs"),
+        NULL, NULL, NULL
+    },
     /* name, icon name, label */ { "New Window", "window-new", N_("New _Window"),
         "<control>N", N_("Open another Caja window for the displayed location"),
         G_CALLBACK (action_new_window_callback)
@@ -949,7 +948,9 @@ caja_navigation_window_initialize_actions (CajaNavigationWindow *window)
 
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
     action_group = gtk_action_group_new ("NavigationActions");
+#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
     window->details->navigation_action_group = action_group;
     gtk_action_group_add_actions (action_group,
                                   navigation_entries, G_N_ELEMENTS (navigation_entries),
@@ -1059,7 +1060,6 @@ caja_navigation_window_initialize_actions (CajaNavigationWindow *window)
 
     caja_navigation_window_update_split_view_actions_sensitivity (window);
 }
-
 
 /**
  * caja_window_initialize_menus

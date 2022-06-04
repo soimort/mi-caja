@@ -4,6 +4,7 @@
 
    Copyright (C) 2000 Eazel, Inc.
    Copyright (C) 2012 Jasmine Hassan <jasmine.aura@gmail.com>
+   Copyright (C) 2012-2021 The MATE developers
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public License as
@@ -67,7 +68,6 @@ typedef struct EelBackgroundClass EelBackgroundClass;
 
 GType                       eel_background_get_type              (void);
 EelBackground *             eel_background_new                   (void);
-
 
 /* Calls to change a background. */
 void                        eel_background_set_use_base          (EelBackground   *self,

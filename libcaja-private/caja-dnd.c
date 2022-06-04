@@ -92,7 +92,6 @@ caja_drag_finalize (CajaDragInfo *drag_info)
     g_free (drag_info);
 }
 
-
 /* Functions to deal with CajaDragSelectionItems.  */
 
 CajaDragSelectionItem *
@@ -349,45 +348,67 @@ caja_drag_items_on_desktop (const GList *selection_list)
 GdkDragAction
 caja_drag_default_drop_action_for_netscape_url (GdkDragContext *context)
 {
-    /* Mozilla defaults to copy, but unless thats the
-       only allowed thing (enforced by ctrl) we want to ASK */
-    if (gdk_drag_context_get_suggested_action (context) == GDK_ACTION_COPY &&
-            gdk_drag_context_get_actions (context) != GDK_ACTION_COPY)
+    /* Mozilla defaults to copy, however by default caja creates a link
+     * if available.
+     *
+     * Enforced action X:
+     * ((actions & X) != 0) && (suggested_action == X)
+     *    - GDK_ACTION_LINK enforced by Alt
+     *    - GDK_ACTION_MOVE enforced by Shift
+     *    - GDK_ACTION_COPY enforced by Ctrl
+     */
+    GdkDragAction suggested_action = gdk_drag_context_get_suggested_action (context);
+    GdkDragAction actions = gdk_drag_context_get_actions (context);
+    if ((actions & GDK_ACTION_LINK) == GDK_ACTION_LINK)
     {
-        return GDK_ACTION_ASK;
+        return GDK_ACTION_LINK;
     }
-    else if (gdk_drag_context_get_suggested_action (context) == GDK_ACTION_MOVE)
+    else if (suggested_action == GDK_ACTION_MOVE)
     {
         /* Don't support move */
         return GDK_ACTION_COPY;
     }
 
-    return gdk_drag_context_get_suggested_action (context);
+    return suggested_action;
 }
 
 static gboolean
-check_same_fs (CajaFile *file1,
-               CajaFile *file2)
+check_same_fs (const char *target_uri, 
+               CajaFile *target_file,
+               const char *dropped_uri,
+               CajaFile *dropped_file)
 {
     gboolean result;
 
     result = FALSE;
 
-    if (file1 != NULL && file2 != NULL)
+    char *target_fs = NULL, *dropped_fs = NULL;
+
+    if (target_file != NULL)
     {
-        char *id1, *id2;
-
-        id1 = caja_file_get_filesystem_id (file1);
-        id2 = caja_file_get_filesystem_id (file2);
-
-        if (id1 != NULL && id2 != NULL)
-        {
-            result = (strcmp (id1, id2) == 0);
-        }
-
-        g_free (id1);
-        g_free (id2);
+        target_fs = caja_file_get_filesystem_id (target_file);
     }
+    if (target_fs == NULL)
+    {
+        target_fs = caja_get_filesystem_id_by_uri (target_uri, TRUE);
+    }
+
+    if (dropped_file != NULL && !caja_file_is_symbolic_link (dropped_file))
+    {
+        dropped_fs = caja_file_get_filesystem_id (dropped_file);
+    }
+    if (dropped_fs == NULL)
+    {
+        dropped_fs = caja_get_filesystem_id_by_uri (dropped_uri, FALSE);
+    }
+
+    if (target_fs != NULL && dropped_fs != NULL)
+    {
+        result = (strcmp (target_fs, dropped_fs) == 0);
+    }
+
+    g_free (target_fs);
+    g_free (dropped_fs);
 
     return result;
 }
@@ -511,7 +532,7 @@ caja_drag_default_drop_action_for_icons (GdkDragContext *context,
         target = g_file_new_for_uri (target_uri_string);
     }
 
-    same_fs = check_same_fs (target_file, dropped_file);
+    same_fs = check_same_fs (target_uri_string, target_file, dropped_uri, dropped_file);
 
     caja_file_unref (dropped_file);
     caja_file_unref (target_file);
@@ -587,7 +608,7 @@ add_one_mate_icon (const char *uri, int x, int y, int w, int h,
 
     result = (GString *) data;
 
-    g_string_append_printf (result, "%s\r%d:%d:%hu:%hu\r\n",
+    g_string_append_printf (result, "%s\r%d:%d:%d:%d\r\n",
                             uri, x, y, w, h);
 }
 
@@ -907,7 +928,6 @@ caja_drag_autoscroll_in_scroll_region (GtkWidget *widget)
     return x_scroll_delta != 0 || y_scroll_delta != 0;
 }
 
-
 void
 caja_drag_autoscroll_calculate_delta (GtkWidget *widget, float *x_scroll_delta, float *y_scroll_delta)
 {
@@ -994,8 +1014,6 @@ caja_drag_autoscroll_calculate_delta (GtkWidget *widget, float *x_scroll_delta, 
     }
 
 }
-
-
 
 void
 caja_drag_autoscroll_start (CajaDragInfo *drag_info,
@@ -1218,7 +1236,6 @@ slot_proxy_drag_drop (GtkWidget          *widget,
     return TRUE;
 }
 
-
 static void
 slot_proxy_handle_drop (GtkWidget                *widget,
                         GdkDragContext           *context,
@@ -1295,7 +1312,6 @@ slot_proxy_handle_drop (GtkWidget                *widget,
                     target_uri,
                     gdk_drag_context_get_selected_action (context));
         }
-
 
         gtk_drag_finish (context, TRUE, FALSE, time);
     }
@@ -1406,5 +1422,4 @@ caja_drag_slot_proxy_init (GtkWidget *widget,
                       G_CALLBACK (slot_proxy_drag_leave),
                       drag_info);
 }
-
 

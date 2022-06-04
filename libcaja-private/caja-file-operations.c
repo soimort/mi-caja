@@ -65,6 +65,7 @@
 #include "caja-file-utilities.h"
 #include "caja-file-conflict-dialog.h"
 #include "caja-undostack-manager.h"
+#include "caja-metadata.h"
 
 /* TODO: TESTING!!! */
 
@@ -122,7 +123,6 @@ typedef struct {
 	CajaCreateCallback done_callback;
 	gpointer done_callback_data;
 } CreateJob;
-
 
 typedef struct {
 	CommonJob common;
@@ -186,9 +186,7 @@ typedef struct {
 #define RETRY _("_Retry")
 #define DELETE _("_Delete")
 #define DELETE_ALL _("Delete _All")
-#define REPLACE _("_Replace")
 #define REPLACE_ALL _("Replace _All")
-#define MERGE _("_Merge")
 #define MERGE_ALL _("Merge _All")
 #define COPY_FORCE _("Copy _Anyway")
 
@@ -242,7 +240,6 @@ static void scan_sources (GList *files,
 			  SourceInfo *source_info,
 			  CommonJob *job,
 			  OpKind kind);
-
 
 static gboolean empty_trash_job (GIOSchedulerJob *io_job,
 				 GCancellable *cancellable,
@@ -379,7 +376,7 @@ get_link_name (const char *name, int count, int max_length)
 {
 	const char *format;
 	char *result;
-	int unshortened_length;
+	size_t unshortened_length;
 	gboolean use_count;
 
 	g_assert (name != NULL);
@@ -447,10 +444,10 @@ get_link_name (const char *name, int count, int max_length)
 	else
 		result = g_strdup_printf (format, name);
 
-	if (max_length > 0 && (unshortened_length = strlen (result)) > max_length) {
+	if (max_length > 0 && (unshortened_length = strlen (result)) > (size_t) max_length) {
 		char *new_name;
 
-		new_name = shorten_utf8_string (name, unshortened_length - max_length);
+		new_name = shorten_utf8_string (name, ((int) unshortened_length) - max_length);
 		if (new_name) {
 			g_free (result);
 
@@ -459,14 +456,13 @@ get_link_name (const char *name, int count, int max_length)
 			else
 				result = g_strdup_printf (format, new_name);
 
-			g_assert (strlen (result) <= max_length);
+			g_assert (strlen (result) <= (size_t) max_length);
 			g_free (new_name);
 		}
 	}
 
 	return result;
 }
-
 
 /* Translators:
  * Feel free to leave out the st, nd, rd and th suffix or
@@ -589,7 +585,6 @@ parse_previous_duplicate_name (const char *name,
 		return;
 	}
 
-
 	tag = strstr (name, ANOTHER_COPY_DUPLICATE_TAG);
 	if (tag != NULL) {
 		if (tag > *suffix) {
@@ -600,7 +595,6 @@ parse_previous_duplicate_name (const char *name,
 		*count = 2;
 		return;
 	}
-
 
 	/* Check to see if we got one of st, nd, rd, th. */
 	tag = strstr (name, X11TH_COPY_DUPLICATE_TAG);
@@ -648,7 +642,6 @@ parse_previous_duplicate_name (const char *name,
 		}
 	}
 
-
 	*count = 0;
 	if (**suffix != '\0') {
 		*name_base = extract_string_until (name, *suffix);
@@ -662,7 +655,7 @@ make_next_duplicate_name (const char *base, const char *suffix, int count, int m
 {
 	const char *format;
 	char *result;
-	int unshortened_length;
+	size_t unshortened_length;
 	gboolean use_count;
 
 	if (count < 1) {
@@ -740,10 +733,10 @@ make_next_duplicate_name (const char *base, const char *suffix, int count, int m
 	else
 		result = g_strdup_printf (format, base, suffix);
 
-	if (max_length > 0 && (unshortened_length = strlen (result)) > max_length) {
+	if (max_length > 0 && (unshortened_length = strlen (result)) > (size_t) max_length) {
 		char *new_base;
 
-		new_base = shorten_utf8_string (base, unshortened_length - max_length);
+		new_base = shorten_utf8_string (base, ((int) unshortened_length) - max_length);
 		if (new_base) {
 			g_free (result);
 
@@ -752,7 +745,7 @@ make_next_duplicate_name (const char *base, const char *suffix, int count, int m
 			else
 				result = g_strdup_printf (format, new_base, suffix);
 
-			g_assert (strlen (result) <= max_length);
+			g_assert (strlen (result) <= (size_t) max_length);
 			g_free (new_base);
 		}
 	}
@@ -796,7 +789,6 @@ has_invalid_xml_char (char *str)
 	}
 	return FALSE;
 }
-
 
 static char *
 custom_full_name_to_string (char *format, va_list va)
@@ -859,7 +851,6 @@ custom_basename_to_string (char *format, va_list va)
 		g_free (tmp);
 	}
 
-
 	return name;
 }
 
@@ -868,7 +859,6 @@ custom_basename_skip (va_list *va)
 {
 	(void) va_arg (*va, GFile *);
 }
-
 
 static char *
 custom_size_to_string (char *format, va_list va)
@@ -919,7 +909,6 @@ custom_mount_skip (va_list *va)
 	(void) va_arg (*va, GMount *);
 }
 
-
 static EelPrintfHandler handlers[] = {
 	{ 'F', custom_full_name_to_string, custom_full_name_skip },
 	{ 'B', custom_basename_to_string, custom_basename_skip },
@@ -928,7 +917,6 @@ static EelPrintfHandler handlers[] = {
 	{ 'V', custom_mount_to_string, custom_mount_skip },
 	{ 0 }
 };
-
 
 static char *
 f (const char *format, ...) {
@@ -1790,7 +1778,7 @@ delete_file (CommonJob *job, GFile *file,
 }
 
 static void
-delete_files (CommonJob *job, GList *files, int *files_skipped)
+delete_files (CommonJob *job, GList *files, guint *files_skipped)
 {
 	GList *l;
 	SourceInfo source_info;
@@ -1833,10 +1821,10 @@ delete_files (CommonJob *job, GList *files, int *files_skipped)
 
 static void
 report_trash_progress (CommonJob *job,
-		       int files_trashed,
-		       int total_files)
+                       guint      files_trashed,
+                       guint      total_files)
 {
-	int files_left;
+	guint files_left;
 	char *s;
 
 	files_left = total_files - files_trashed;
@@ -1855,15 +1843,14 @@ report_trash_progress (CommonJob *job,
 	}
 }
 
-
 static void
-trash_files (CommonJob *job, GList *files, int *files_skipped)
+trash_files (CommonJob *job, GList *files, guint *files_skipped)
 {
 	GList *l;
 	GFile *file;
 	GList *to_delete;
 	GError *error;
-	int total_files, files_trashed;
+	guint total_files, files_trashed;
 	char *primary, *secondary, *details;
 	int response;
 
@@ -1991,7 +1978,7 @@ delete_job (GIOSchedulerJob *io_job,
 	gboolean must_confirm_delete_in_trash;
 	gboolean must_confirm_delete;
 	gboolean must_confirm_trash;
-	int files_skipped;
+	guint files_skipped;
 	GFile *file = NULL;
 
 	common = (CommonJob *)job;
@@ -2130,8 +2117,6 @@ caja_file_operations_delete (GList                  *files,
 				  done_callback,  done_callback_data);
 }
 
-
-
 typedef struct {
 	gboolean eject;
 	GMount *mount;
@@ -2154,7 +2139,7 @@ unmount_mount_callback (GObject *source_object,
 		unmounted = g_mount_eject_with_operation_finish (G_MOUNT (source_object),
 								 res, &error);
 		if ((!error) || (unmounted == TRUE)){
-			caja_application_notify_unmount_show ("It is now safe to remove the drive");
+			caja_application_notify_unmount_show (_("It is now safe to remove the drive"));
 		}
 
 	} else {
@@ -2205,7 +2190,7 @@ do_unmount (UnmountData *data)
 					      unmount_mount_callback,
 					      data);
 
-		caja_application_notify_unmount_show ("writing data to the drive-do not unplug");
+		caja_application_notify_unmount_show (_("Writing data to the drive -- do not unplug"));
 
 	} else {
 		g_mount_unmount_with_operation (data->mount,
@@ -2242,7 +2227,6 @@ dir_has_files (GFile *dir)
 		g_file_enumerator_close (enumerator, NULL, NULL);
 		g_object_unref (enumerator);
 	}
-
 
 	return res;
 }
@@ -2312,7 +2296,6 @@ has_trash_files (GMount *mount)
 
 	return res;
 }
-
 
 static gint
 prompt_empty_trash (GtkWindow *parent_window)
@@ -2487,7 +2470,6 @@ volume_mount_cb (GObject *source_object,
 
 	g_object_unref (mount_op);
 }
-
 
 void
 caja_file_operations_mount_volume (GtkWindow *parent_window,
@@ -2941,11 +2923,11 @@ verify_destination (CommonJob *job,
 		free_size = g_file_info_get_attribute_uint64 (fsinfo,
 							      G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
 
-		if (free_size < required_size) {
+		if (free_size < (guint64) required_size) {
 			primary = f (_("Error while copying to \"%B\"."), dest);
 			secondary = f(_("There is not enough space on the destination. Try to remove files to make space."));
 
-			details = f (_("There is %S available, but %S is required."), free_size, required_size);
+			details = f (_("There is %" G_GUINT64_FORMAT  " available, but %" G_GOFFSET_FORMAT " is required."), free_size, required_size);
 
 			response = run_warning (job,
 						primary,
@@ -3192,7 +3174,7 @@ make_file_name_valid_for_dest_fs (char *filename,
 		    !strcmp (dest_fs_type, "msdos") ||
 		    !strcmp (dest_fs_type, "msdosfs")) {
 			gboolean ret;
-			int i, old_len;
+			size_t i, old_len;
 
 			ret = str_replace (filename, FAT_FORBIDDEN_CHARACTERS, '_');
 
@@ -4046,7 +4028,7 @@ do_run_conflict_dialog (gpointer _data)
 	if (response == CONFLICT_RESPONSE_RENAME) {
 		data->resp_data->new_name =
 			caja_file_conflict_dialog_get_new_name (CAJA_FILE_CONFLICT_DIALOG (dialog));
-	} else if (response != GTK_RESPONSE_CANCEL ||
+	} else if (response != GTK_RESPONSE_CANCEL &&
 		   response != GTK_RESPONSE_NONE) {
 		   data->resp_data->apply_to_all =
 			   caja_file_conflict_dialog_get_apply_to_all
@@ -4169,7 +4151,6 @@ copy_move_file (CopyMoveJob *copy_job,
 		dest = get_target_file (src, dest_dir, *dest_fs_type, same_fs);
 	}
 
-
 	/* Don't allow recursive move/copy into itself.
 	 * (We would get a file system error if we proceeded but it is nicer to
 	 * detect and report it at this level) */
@@ -4236,7 +4217,6 @@ copy_move_file (CopyMoveJob *copy_job,
 
 		goto out;
 	}
-
 
  retry:
 	error = NULL;
@@ -4590,7 +4570,6 @@ copy_files (CopyMoveJob *job,
 			point = NULL;
 		}
 
-
 		same_fs = FALSE;
 		if (dest_fs_id) {
 			same_fs = has_fs_id (src, dest_fs_id);
@@ -4862,7 +4841,6 @@ move_file_prepare (CopyMoveJob *move_job,
 
 	dest = get_target_file (src, dest_dir, *dest_fs_type, same_fs);
 
-
 	/* Don't allow recursive move/copy into itself.
 	 * (We would get a file system error if we proceeded but it is nicer to
 	 * detect and report it at this level) */
@@ -5094,7 +5072,6 @@ move_files_prepare (CopyMoveJob *job,
 			point = NULL;
 		}
 
-
 		same_fs = FALSE;
 		if (dest_fs_id) {
 			same_fs = has_fs_id (src, dest_fs_id);
@@ -5111,7 +5088,6 @@ move_files_prepare (CopyMoveJob *job,
 	}
 
 	*fallbacks = g_list_reverse (*fallbacks);
-
 
 }
 
@@ -5168,7 +5144,6 @@ move_files (CopyMoveJob *job,
 		i++;
 	}
 }
-
 
 static gboolean
 move_job_done (gpointer user_data)
@@ -5362,7 +5337,6 @@ get_abs_path_for_symlink (GFile *file)
 	g_free (relative);
 	return abs;
 }
-
 
 static void
 link_file (CopyMoveJob *job,
@@ -5573,7 +5547,6 @@ link_job (GIOSchedulerJob *io_job,
 			point = NULL;
 		}
 
-
 		link_file (job, src, job->destination,
 			   &dest_fs_type, job->debuting_files,
 			   point, left);
@@ -5633,7 +5606,6 @@ caja_file_operations_link (GList *files,
 			   0,
 			   job->common.cancellable);
 }
-
 
 void
 caja_file_operations_duplicate (GList *files,
@@ -5732,7 +5704,6 @@ set_permissions_file (SetPermissionsJob *job,
 		mask = job->file_mask;
 	}
 
-
 	if (!job_aborted (common) &&
 	    g_file_info_has_attribute (info, G_FILE_ATTRIBUTE_UNIX_MODE)) {
 		current = g_file_info_get_attribute_uint32 (info, G_FILE_ATTRIBUTE_UNIX_MODE);
@@ -5777,7 +5748,6 @@ set_permissions_file (SetPermissionsJob *job,
 	}
 }
 
-
 static gboolean
 set_permissions_job (GIOSchedulerJob *io_job,
 		     GCancellable *cancellable,
@@ -5803,8 +5773,6 @@ set_permissions_job (GIOSchedulerJob *io_job,
 
 	return FALSE;
 }
-
-
 
 void
 caja_file_set_permissions_recursive (const char *directory,
@@ -5884,6 +5852,7 @@ caja_file_operations_copy_move (const GList *item_uris,
 {
 	GList *locations;
 	GList *p;
+	GFile *src_dir;
 	GFile *dest;
 	GtkWindow *parent_window;
 	gboolean target_is_mapping;
@@ -5920,10 +5889,9 @@ caja_file_operations_copy_move (const GList *item_uris,
 		parent_window = (GtkWindow *)gtk_widget_get_ancestor (parent_view, GTK_TYPE_WINDOW);
 	}
 
-	if (copy_action == GDK_ACTION_COPY) {
-		GFile *src_dir;
+	src_dir = g_file_get_parent (locations->data);
 
-		src_dir = g_file_get_parent (locations->data);
+	if (copy_action == GDK_ACTION_COPY) {
 		if (target_dir == NULL ||
 		    (src_dir != NULL &&
 		     g_file_equal (src_dir, dest))) {
@@ -5938,10 +5906,6 @@ caja_file_operations_copy_move (const GList *item_uris,
 						       parent_window,
 						       done_callback, done_callback_data);
 		}
-		if (src_dir) {
-			g_object_unref (src_dir);
-		}
-
 	} else if (copy_action == GDK_ACTION_MOVE) {
 		if (g_file_has_uri_scheme (dest, "trash")) {
 			MoveTrashCBData *cb_data;
@@ -5953,7 +5917,7 @@ caja_file_operations_copy_move (const GList *item_uris,
 								  parent_window,
 								  (CajaDeleteCallback) callback_for_move_to_trash,
 								  cb_data);
-		} else {
+		} else if (src_dir == NULL || !g_file_equal (src_dir, dest)) {
 			caja_file_operations_move (locations,
 						       relative_item_points,
 						       dest,
@@ -5971,6 +5935,10 @@ caja_file_operations_copy_move (const GList *item_uris,
     	g_list_free_full (locations, g_object_unref);
 	if (dest) {
 		g_object_unref (dest);
+	}
+
+	if (src_dir) {
+		g_object_unref (src_dir);
 	}
 }
 
@@ -6166,11 +6134,13 @@ create_job (GIOSchedulerJob *io_job,
 			if (count == 1) {
 				new_filename = g_strdup (filename);
 			} else if (job->make_dir) {
-				filename2 = g_strdup_printf ("%s %d", filename, count);
+				size_t unshortened_length;
 
+				filename2 = g_strdup_printf ("%s %d", filename, count);
+				unshortened_length = strlen (filename2);
 				new_filename = NULL;
-				if (max_length > 0 && strlen (filename2) > max_length) {
-					new_filename = shorten_utf8_string (filename2, strlen (filename2) - max_length);
+				if (max_length > 0 && unshortened_length > (size_t) max_length) {
+					new_filename = shorten_utf8_string (filename2, ((int) unshortened_length) - max_length);
 				}
 
 				if (new_filename == NULL) {
@@ -6397,8 +6367,6 @@ caja_file_operations_new_file (GtkWidget *parent_view,
 			   job->common.cancellable);
 }
 
-
-
 static void
 delete_trash_file (CommonJob *job,
 		   GFile *file,
@@ -6573,7 +6541,6 @@ mark_desktop_file_trusted (CommonJob *common,
 			response = 0;
 		}
 
-
 		if (response == 0 || response == GTK_RESPONSE_DELETE_EVENT) {
 			abort_job (common);
 		} else if (response == 1) {
@@ -6660,7 +6627,6 @@ mark_desktop_file_trusted (CommonJob *common,
 		goto out;
 	}
 
-
 	if (g_file_info_has_attribute (info, G_FILE_ATTRIBUTE_UNIX_MODE)) {
 		current_perms = g_file_info_get_attribute_uint32 (info, G_FILE_ATTRIBUTE_UNIX_MODE);
 		new_perms = current_perms | S_IXGRP | S_IXUSR | S_IXOTH;
@@ -6696,6 +6662,12 @@ mark_desktop_file_trusted (CommonJob *common,
 			}
 	}
 	g_object_unref (info);
+
+	g_file_set_attribute_string (file,
+	                             "metadata::" CAJA_METADATA_KEY_TRUSTED_LAUNCHER, "true",
+	                             G_FILE_QUERY_INFO_NONE,
+	                             cancellable,
+	                             NULL);
  out:
 	;
 }
@@ -6754,7 +6726,6 @@ void
 caja_self_check_file_operations (void)
 {
 	setlocale (LC_MESSAGES, "C");
-
 
 	/* test the next duplicate name generator */
 	EEL_CHECK_STRING_RESULT (get_duplicate_name (" (copy)", 1, -1), " (another copy)");

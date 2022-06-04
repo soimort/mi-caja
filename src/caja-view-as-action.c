@@ -36,9 +36,6 @@
 #include "caja-window-private.h"
 #include "caja-navigation-window-slot.h"
 
-static void caja_view_as_action_init       (CajaViewAsAction *action);
-static void caja_view_as_action_class_init (CajaViewAsActionClass *class);
-
 static GObjectClass *parent_class = NULL;
 
 struct _CajaViewAsActionPrivate
@@ -55,7 +52,6 @@ enum
     PROP_0,
     PROP_WINDOW
 };
-
 
 static void
 activate_nth_short_list_item (CajaWindow *window, guint index)
@@ -169,7 +165,6 @@ view_as_changed_callback (CajaWindow *window,
         gtk_widget_show(GTK_WIDGET(combo_box));
     }
 }
-
 
 static void
 connect_proxy (GtkAction *action,

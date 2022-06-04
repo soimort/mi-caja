@@ -36,8 +36,6 @@
 
 #define TIMED_WAIT_MINIMUM_DIALOG_WIDTH 300
 
-#define RESPONSE_DETAILS 1000
-
 typedef struct
 {
     EelCancelCallback cancel_callback;
@@ -566,7 +564,6 @@ eel_show_info_dialog_with_details (const char *primary_text,
 
 }
 
-
 GtkDialog *
 eel_show_warning_dialog (const char *primary_text,
                          const char *secondary_text,
@@ -576,7 +573,6 @@ eel_show_warning_dialog (const char *primary_text,
                            secondary_text,
                            GTK_MESSAGE_WARNING, parent);
 }
-
 
 GtkDialog *
 eel_show_error_dialog (const char *primary_text,

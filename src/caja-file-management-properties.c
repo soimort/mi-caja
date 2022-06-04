@@ -63,7 +63,6 @@
 #define CAJA_FILE_MANAGEMENT_PROPERTIES_LABELS_BESIDE_ICONS_WIDGET "labels_beside_icons_checkbutton"
 #define CAJA_FILE_MANAGEMENT_PROPERTIES_ALL_COLUMNS_SAME_WIDTH "all_columns_same_width_checkbutton"
 #define CAJA_FILE_MANAGEMENT_PROPERTIES_ALWAYS_USE_BROWSER_WIDGET "always_use_browser_checkbutton"
-#define CAJA_FILE_MANAGEMENT_PROPERTIES_ALWAYS_USE_LOCATION_ENTRY_WIDGET "always_use_location_entry_checkbutton"
 #define CAJA_FILE_MANAGEMENT_PROPERTIES_TRASH_CONFIRM_WIDGET "trash_confirm_checkbutton"
 #define CAJA_FILE_MANAGEMENT_PROPERTIES_TRASH_CONFIRM_TRASH_WIDGET "trash_confirm_trash_checkbutton"
 #define CAJA_FILE_MANAGEMENT_PROPERTIES_TRASH_DELETE_WIDGET "trash_delete_checkbutton"
@@ -112,6 +111,7 @@ static const char * const sort_order_values[] =
     "size_on_disk",
     "type",
     "mtime",
+    "btime",
     "atime",
     "emblems",
     "extension",
@@ -198,29 +198,6 @@ enum
 static void caja_file_management_properties_dialog_update_media_sensitivity (GtkBuilder *builder);
 
 static void
-caja_file_management_properties_size_group_create (GtkBuilder *builder,
-        char *prefix,
-        int items)
-{
-    GtkSizeGroup *size_group;
-    int i;
-    GtkWidget *widget = NULL;
-
-    size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
-
-    for (i = 0; i < items; i++)
-    {
-        char *item_name;
-
-        item_name = g_strdup_printf ("%s_%d", prefix, i);
-        widget = GTK_WIDGET (gtk_builder_get_object (builder, item_name));
-        gtk_size_group_add_widget (size_group, widget);
-        g_free (item_name);
-    }
-    g_object_unref (G_OBJECT (size_group));
-}
-
-static void
 preferences_show_help (GtkWindow *parent,
                        char const *helpfile,
                        char const *sect_id)
@@ -249,15 +226,14 @@ preferences_show_help (GtkWindow *parent,
                                          _("There was an error displaying help: \n%s"),
                                          error->message);
 
-        g_signal_connect (G_OBJECT (dialog),
-                          "response", G_CALLBACK (gtk_widget_destroy),
+        g_signal_connect (dialog, "response",
+                          G_CALLBACK (gtk_widget_destroy),
                           NULL);
         gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
         gtk_widget_show (dialog);
         g_error_free (error);
     }
 }
-
 
 static void
 caja_file_management_properties_dialog_response_cb (GtkDialog *parent,
@@ -381,25 +357,18 @@ icon_captions_changed_callback (GtkComboBox *combo_box,
     int i;
 
     builder = GTK_BUILDER (user_data);
-
     captions = g_ptr_array_new ();
 
     for (i = 0; icon_captions_components[i] != NULL; i++)
     {
-        GtkWidget *combo_box;
-        int active;
+        GObject *object;
         GPtrArray *column_names;
-        char *name;
+        int active;
 
-        combo_box = GTK_WIDGET (gtk_builder_get_object
-                                (builder, icon_captions_components[i]));
-        active = gtk_combo_box_get_active (GTK_COMBO_BOX (combo_box));
-
-        column_names = g_object_get_data (G_OBJECT (combo_box),
-                                          "column_names");
-
-        name = g_ptr_array_index (column_names, active);
-        g_ptr_array_add (captions, name);
+        object = gtk_builder_get_object (builder, icon_captions_components[i]);
+        column_names = g_object_get_data (object, "column_names");
+        active = gtk_combo_box_get_active (GTK_COMBO_BOX(object));
+        g_ptr_array_add (captions, g_ptr_array_index (column_names, active));
     }
     g_ptr_array_add (captions, NULL);
 
@@ -415,7 +384,7 @@ update_caption_combo_box (GtkBuilder *builder,
                           const char *name)
 {
     GtkWidget *combo_box;
-    int i;
+    guint i;
     GPtrArray *column_names;
 
     combo_box = GTK_WIDGET (gtk_builder_get_object (builder, combo_box_name));
@@ -432,7 +401,7 @@ update_caption_combo_box (GtkBuilder *builder,
     {
         if (!strcmp (name, g_ptr_array_index (column_names, i)))
         {
-            gtk_combo_box_set_active (GTK_COMBO_BOX (combo_box), i);
+            gtk_combo_box_set_active (GTK_COMBO_BOX (combo_box), (int) i);
             break;
         }
     }
@@ -726,21 +695,19 @@ extension_list_selection_changed_configure (GtkTreeSelection *selection, GtkButt
 static void
 extension_state_toggled (GtkCellRendererToggle *cell, gchar *path_str, gpointer data)
 {
-	GtkTreeIter iter;
-	GtkTreePath *path;
-	GtkTreeModel *model;
+    GtkTreeIter iter;
+    GtkTreePath *path;
+    GtkTreeModel *model;
     gboolean new_state;
     Extension *ext;
 
-	path = gtk_tree_path_new_from_string (path_str);
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW (data));
+    path = gtk_tree_path_new_from_string (path_str);
+    model = gtk_tree_view_get_model (GTK_TREE_VIEW (data));
 
     g_object_get (G_OBJECT (cell), "active", &new_state, NULL);
-    gtk_tree_model_get_iter_from_string (model, &iter, path_str);
-
     new_state ^= 1;
 
-	if (&iter != NULL)
+    if (gtk_tree_model_get_iter_from_string (model, &iter, path_str))
     {
         gtk_tree_model_get (model, &iter, EXT_STRUCT_COLUMN, &ext, -1);
 
@@ -752,7 +719,6 @@ extension_state_toggled (GtkCellRendererToggle *cell, gchar *path_str, gpointer 
     }
     gtk_tree_path_free (path);
 }
-
 
 static void
 caja_file_management_properties_dialog_setup_media_page (GtkBuilder *builder)
@@ -787,7 +753,6 @@ caja_file_management_properties_dialog_setup_media_page (GtkBuilder *builder)
 
     gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (other_type_list_store),
                                           1, GTK_SORT_ASCENDING);
-
 
     content_types = g_content_types_get_registered ();
 
@@ -839,8 +804,7 @@ caja_file_management_properties_dialog_setup_media_page (GtkBuilder *builder)
 skip:
         ;
     }
-    g_list_foreach (content_types, (GFunc) g_free, NULL);
-    g_list_free (content_types);
+    g_list_free_full (content_types, g_free);
 
     gtk_combo_box_set_model (GTK_COMBO_BOX (other_type_combo_box), GTK_TREE_MODEL (other_type_list_store));
 
@@ -855,8 +819,7 @@ skip:
                                     "text", 1,
                                     NULL);
 
-    g_signal_connect (G_OBJECT (other_type_combo_box),
-                      "changed",
+    g_signal_connect (other_type_combo_box, "changed",
                       G_CALLBACK (other_type_combo_box_changed),
                       gtk_builder_get_object (builder, "media_other_action_combobox"));
 
@@ -879,7 +842,7 @@ caja_file_management_properties_dialog_setup_extension_page (GtkBuilder *builder
     gchar *ext_text_info;
 
     GList *extensions;
-    int i;
+    guint i;
 
     extensions = caja_extensions_get_list ();
 
@@ -1134,15 +1097,6 @@ caja_file_management_properties_dialog_setup (GtkBuilder *builder, GtkWindow *wi
     GtkWidget *dialog;
 
     /* setup UI */
-    caja_file_management_properties_size_group_create (builder,
-            "views_label",
-            5);
-    caja_file_management_properties_size_group_create (builder,
-            "captions_label",
-            3);
-    caja_file_management_properties_size_group_create (builder,
-            "preview_label",
-            5);
     create_date_format_menu (builder);
 
     /* setup preferences */
@@ -1263,10 +1217,9 @@ caja_file_management_properties_dialog_setup (GtkBuilder *builder, GtkWindow *wi
                               G_CALLBACK(caja_file_management_properties_dialog_update_media_sensitivity),
                               builder);
 
-
     /* UI callbacks */
     dialog = GTK_WIDGET (gtk_builder_get_object (builder, "file_management_dialog"));
-    g_signal_connect_data (G_OBJECT (dialog), "response",
+    g_signal_connect_data (dialog, "response",
                            G_CALLBACK (caja_file_management_properties_dialog_response_cb),
                            g_object_ref (builder),
                            (GClosureNotify)g_object_unref,
@@ -1280,10 +1233,10 @@ caja_file_management_properties_dialog_setup (GtkBuilder *builder, GtkWindow *wi
     }
 
     GtkWidget *notebook = GTK_WIDGET (gtk_builder_get_object (builder, "notebook1"));
-    gtk_widget_add_events (GTK_WIDGET (notebook), GDK_SCROLL_MASK);
-    g_signal_connect (GTK_WIDGET (notebook), "scroll-event",
-                      G_CALLBACK (eel_dialog_page_scroll_event_callback),
-                      window);
+    gtk_widget_add_events (notebook, GDK_SCROLL_MASK);
+    g_signal_connect (notebook, "scroll-event",
+                      G_CALLBACK (eel_notebook_scroll_event_cb),
+                      NULL);
 
     gtk_widget_show (dialog);
 }
@@ -1308,16 +1261,12 @@ caja_file_management_properties_dialog_show (GCallback close_callback, GtkWindow
 {
     GtkBuilder *builder;
 
-    builder = gtk_builder_new ();
+    builder = gtk_builder_new_from_resource ("/org/mate/caja/caja-file-management-properties.ui");
 
-    gtk_builder_add_from_file (builder,
-                               UIDIR "/caja-file-management-properties.ui",
-                               NULL);
-
-    g_signal_connect (G_OBJECT (gtk_builder_get_object (builder, "file_management_dialog")),
-                      "response", close_callback, NULL);
-    g_signal_connect (G_OBJECT (gtk_builder_get_object (builder, "file_management_dialog")),
-                      "delete_event", G_CALLBACK (delete_event_callback), close_callback);
+    g_signal_connect (gtk_builder_get_object (builder, "file_management_dialog"), "response",
+                      close_callback, NULL);
+    g_signal_connect (gtk_builder_get_object (builder, "file_management_dialog"), "delete_event",
+                      G_CALLBACK (delete_event_callback), close_callback);
 
     caja_file_management_properties_dialog_setup (builder, window);
 

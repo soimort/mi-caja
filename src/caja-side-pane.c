@@ -53,8 +53,6 @@ struct _CajaSidePanePrivate
     GList *panels;
 };
 
-static void caja_side_pane_class_init (CajaSidePaneClass *klass);
-static void caja_side_pane_init       (CajaSidePane *side_pane);
 static void caja_side_pane_dispose    (GObject *object);
 static void caja_side_pane_finalize   (GObject *object);
 
@@ -520,7 +518,6 @@ caja_side_pane_show_panel (CajaSidePane *side_pane,
     gtk_notebook_set_current_page (GTK_NOTEBOOK (side_pane->details->notebook),
                                    page_num);
 }
-
 
 static void
 shortcut_clicked_callback (GtkWidget *button,

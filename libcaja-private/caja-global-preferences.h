@@ -136,14 +136,11 @@ typedef enum
 #define CAJA_COMPACT_VIEW_IID	"OAFIID:Caja_File_Manager_Compact_View"
 #define CAJA_LIST_VIEW_IID		"OAFIID:Caja_File_Manager_List_View"
 
-
     /* Icon View */
 #define CAJA_PREFERENCES_ICON_VIEW_DEFAULT_USE_TIGHTER_LAYOUT	    "default-use-tighter-layout"
 #define CAJA_PREFERENCES_ICON_VIEW_DEFAULT_ZOOM_LEVEL		        "default-zoom-level"
 
 #define CAJA_PREFERENCES_ICON_VIEW_LABELS_BESIDE_ICONS      	"labels-beside-icons"
-
-
 
     /* Which text attributes appear beneath icon names */
 #define CAJA_PREFERENCES_ICON_VIEW_CAPTIONS				"captions"
@@ -212,18 +209,18 @@ typedef enum
 void caja_global_preferences_init                      (void);
 char *caja_global_preferences_get_default_folder_viewer_preference_as_iid (void);
 
-GSettings *caja_preferences;
-GSettings *caja_media_preferences;
-GSettings *caja_window_state;
-GSettings *caja_icon_view_preferences;
-GSettings *caja_desktop_preferences;
-GSettings *caja_tree_sidebar_preferences;
-GSettings *caja_compact_view_preferences;
-GSettings *caja_list_view_preferences;
-GSettings *caja_extension_preferences;
+extern GSettings *caja_preferences;
+extern GSettings *caja_media_preferences;
+extern GSettings *caja_window_state;
+extern GSettings *caja_icon_view_preferences;
+extern GSettings *caja_desktop_preferences;
+extern GSettings *caja_tree_sidebar_preferences;
+extern GSettings *caja_compact_view_preferences;
+extern GSettings *caja_list_view_preferences;
+extern GSettings *caja_extension_preferences;
 
-GSettings *mate_background_preferences;
-GSettings *mate_lockdown_preferences;
+extern GSettings *mate_background_preferences;
+extern GSettings *mate_lockdown_preferences;
 
 G_END_DECLS
 

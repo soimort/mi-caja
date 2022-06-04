@@ -39,7 +39,6 @@
 #include "caja-signaller.h"
 
 #define sure_string(s)                    ((const char *)((s)!=NULL?(s):""))
-#define DESKTOP_ENTRY_GROUP		  "Desktop Entry"
 
 struct _CajaOpenWithDialogDetails
 {
@@ -391,7 +390,6 @@ response_cb (CajaOpenWithDialog *dialog,
 
 }
 
-
 static void
 caja_open_with_dialog_class_init (CajaOpenWithDialogClass *class)
 {
@@ -611,7 +609,6 @@ caja_open_with_dialog_add_icon_idle (CajaOpenWithDialog *dialog)
     return TRUE;
 }
 
-
 static gboolean
 caja_open_with_search_equal_func (GtkTreeModel *model,
                                   int column,
@@ -688,8 +685,6 @@ caja_open_with_search_equal_func (GtkTreeModel *model,
         return TRUE;
     }
 }
-
-
 
 static gboolean
 caja_open_with_dialog_add_items_idle (CajaOpenWithDialog *dialog)
@@ -885,7 +880,6 @@ caja_open_with_dialog_init (CajaOpenWithDialog *dialog)
                         FALSE, FALSE, 0);
     gtk_widget_show (dialog->details->label);
 
-
     scrolled_window = gtk_scrolled_window_new (NULL, NULL);
     gtk_widget_set_size_request (scrolled_window, 400, 300);
 
@@ -924,10 +918,8 @@ caja_open_with_dialog_init (CajaOpenWithDialog *dialog)
                                          (GSourceFunc) caja_open_with_dialog_add_items_idle,
                                          dialog, NULL);
 
-
     gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), vbox, TRUE, TRUE, 0);
     gtk_widget_show_all (vbox);
-
 
     expander = gtk_expander_new_with_mnemonic (_("_Use a custom command"));
     gtk_box_pack_start (GTK_BOX (vbox), expander, FALSE, FALSE, 0);
@@ -973,7 +965,6 @@ caja_open_with_dialog_init (CajaOpenWithDialog *dialog)
                            "process-stop",
                            GTK_RESPONSE_CANCEL);
 
-
     /* Create a custom stock icon */
     dialog->details->button = gtk_button_new ();
 
@@ -999,7 +990,6 @@ caja_open_with_dialog_init (CajaOpenWithDialog *dialog)
 
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog),
                                   dialog->details->button, RESPONSE_OPEN);
-
 
     gtk_dialog_set_default_response (GTK_DIALOG (dialog),
                                      RESPONSE_OPEN);
@@ -1151,7 +1141,6 @@ set_uri_and_type (CajaOpenWithDialog *dialog,
     g_free (label);
     g_free (name);
 }
-
 
 static GtkWidget *
 real_caja_open_with_dialog_new (const char *uri,

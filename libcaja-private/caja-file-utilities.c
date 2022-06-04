@@ -82,7 +82,6 @@ caja_compute_title_for_location (GFile *location)
     return title;
 }
 
-
 /**
  * caja_get_user_directory:
  *
@@ -186,7 +185,6 @@ typedef struct {
 	char*path;
 	CajaFile* file;
 } XdgDirEntry;
-
 
 static XdgDirEntry *
 parse_xdg_dirs (const char *config_file)
@@ -559,7 +557,6 @@ caja_get_desktop_location (void)
     return res;
 }
 
-
 /**
  * caja_get_desktop_directory_uri:
  *
@@ -585,7 +582,6 @@ caja_get_home_directory_uri (void)
 {
     return  g_filename_to_uri (g_get_home_dir (), NULL, NULL);
 }
-
 
 gboolean
 caja_should_use_templates_directory (void)
@@ -634,7 +630,6 @@ static GFile *desktop_dir = NULL;
 static GFile *desktop_dir_dir = NULL;
 static char *desktop_dir_filename = NULL;
 static gboolean desktop_dir_changed_callback_installed = FALSE;
-
 
 static void
 desktop_dir_changed (void)
@@ -721,7 +716,6 @@ caja_is_root_directory (GFile *dir)
 
     return g_file_equal (dir, root_dir);
 }
-
 
 gboolean
 caja_is_desktop_directory_file (GFile *dir,
@@ -1134,6 +1128,31 @@ caja_is_in_system_dir (GFile *file)
     return res;
 }
 
+gboolean
+caja_is_in_desktop_dir (GFile *file)
+{
+    char *path;
+    char *dirname;
+    gboolean res = FALSE;
+
+    if (!g_file_is_native (file))
+    {
+        return res;
+    }
+
+    path = g_file_get_path (file);
+    dirname = g_path_get_dirname (path);
+    if (g_strcmp0 (dirname, g_get_user_special_dir (G_USER_DIRECTORY_DESKTOP)) == 0)
+    {
+        res = TRUE;
+    }
+
+    g_free (path);
+    g_free (dirname);
+
+    return res;
+}
+
 GHashTable *
 caja_trashed_files_get_original_directories (GList *files,
         GList **unhandled_files)
@@ -1272,6 +1291,42 @@ caja_restore_files_from_trash (GList *files,
     }
 
     caja_file_list_unref (unhandled_files);
+}
+
+char *
+caja_get_filesystem_id_by_location (GFile *location, gboolean follow)
+{
+    GFileInfo *info;
+    GFileQueryInfoFlags flags;
+    char *filesystem_id = NULL;
+
+    if (follow) {
+        flags = G_FILE_QUERY_INFO_NONE;
+    } else {
+        flags = G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS;
+    }
+
+    info = g_file_query_info (location, G_FILE_ATTRIBUTE_ID_FILESYSTEM, flags, NULL, NULL);
+    if (info) {
+        if (g_file_info_has_attribute (info, G_FILE_ATTRIBUTE_ID_FILESYSTEM)) {
+            filesystem_id = g_strdup (
+                g_file_info_get_attribute_string (info, G_FILE_ATTRIBUTE_ID_FILESYSTEM));
+        }
+        g_object_unref (info);
+    }
+    return filesystem_id;
+}
+
+char *
+caja_get_filesystem_id_by_uri (const char *uri, gboolean follow)
+{
+    GFile *location;
+    char *filesystem_id;
+
+    location = g_file_new_for_uri (uri);
+    filesystem_id = caja_get_filesystem_id_by_location (location, follow);
+    g_object_unref (location);
+    return filesystem_id;
 }
 
 #if !defined (CAJA_OMIT_SELF_CHECK)

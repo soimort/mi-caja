@@ -55,8 +55,6 @@ static guint signals[LAST_SIGNAL] = { 0 };
 static GHashTable *directories;
 
 static void               caja_directory_finalize         (GObject                *object);
-static void               caja_directory_init             (CajaDirectory *directory);
-static void               caja_directory_class_init (CajaDirectoryClass *klass);
 static CajaDirectory *caja_directory_new              (GFile                  *location);
 static char *             real_get_name_for_self_as_new_file  (CajaDirectory      *directory);
 static GList *            real_get_file_list                  (CajaDirectory      *directory);
@@ -321,7 +319,6 @@ caja_directory_get_existing (GFile *location)
 
     return caja_directory_get_internal (location, FALSE);
 }
-
 
 CajaDirectory *
 caja_directory_get_by_uri (const char *uri)
@@ -887,7 +884,6 @@ caja_directory_notify_files_added (GList *files)
              * we must invalidate it's item count.
              */
 
-
             file = NULL;
             parent = g_file_get_parent (location);
             if (parent)
@@ -925,7 +921,6 @@ caja_directory_notify_files_added (GList *files)
              * If it was renamed this could be ignored, but
              * queue a change just in case */
             caja_file_changed (file);
-            caja_file_unref (file);
         }
         else
         {
@@ -933,6 +928,7 @@ caja_directory_notify_files_added (GList *files)
                                      directory,
                                      g_object_ref (location));
         }
+        caja_file_unref (file);
         caja_directory_unref (directory);
     }
 
@@ -1555,7 +1551,6 @@ caja_directory_match_pattern (CajaDirectory *directory, const char *pattern)
 {
     GList *files, *l, *ret;
     GPatternSpec *spec;
-
 
     ret = NULL;
     spec = g_pattern_spec_new (pattern);

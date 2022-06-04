@@ -112,7 +112,6 @@ caja_navigation_window_initialize_toolbars (CajaNavigationWindow *window)
     caja_navigation_window_activate_spinner (window);
 }
 
-
 static GList *
 get_extension_toolbar_items (CajaNavigationWindow *window)
 {
@@ -176,7 +175,9 @@ caja_navigation_window_load_extension_toolbar_items (CajaNavigationWindow *windo
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
     action_group = gtk_action_group_new ("ExtensionsToolbarGroup");
     window->details->extensions_toolbar_action_group = action_group;
+#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
     G_GNUC_END_IGNORE_DEPRECATIONS;
     gtk_ui_manager_insert_action_group (ui_manager, action_group, -1);
     g_object_unref (action_group); /* owned by ui manager */

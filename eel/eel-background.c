@@ -4,6 +4,7 @@
 
    Copyright (C) 2000 Eazel, Inc.
    Copyright (C) 2012 Jasmine Hassan <jasmine.aura@gmail.com>
+   Copyright (C) 2012-2021 The MATE developers
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public License as
@@ -31,8 +32,6 @@
 #include <gio/gio.h>
 #include <math.h>
 #include <stdio.h>
-
-#include <libcaja-private/caja-global-preferences.h>
 
 #include "eel-background.h"
 #include "eel-gdk-extensions.h"
@@ -431,6 +430,7 @@ set_root_surface (EelBackground *self,
 static void
 init_fade (EelBackground *self)
 {
+    GSettings *mate_background_preferences;
     GtkWidget *widget = self->details->widget;
     gboolean do_fade;
 
@@ -438,8 +438,11 @@ init_fade (EelBackground *self)
         return;
     }
 
+    mate_background_preferences = g_settings_new ("org.mate.background");
     do_fade = g_settings_get_boolean (mate_background_preferences,
                                       MATE_BG_KEY_BACKGROUND_FADE);
+    g_object_unref (mate_background_preferences);
+
     if (!do_fade) {
     	return;
     }
@@ -998,13 +1001,19 @@ void
 eel_bg_load_from_gsettings (EelBackground *self,
 			    GSettings     *settings)
 {
-    char *keyfile = g_settings_get_string (settings, MATE_BG_KEY_PICTURE_FILENAME);
+    char *picture_filename;
 
-    if (!g_file_test (keyfile, G_FILE_TEST_EXISTS) && (*keyfile != '\0'))
+    picture_filename = g_settings_get_string (settings,
+                                              MATE_BG_KEY_PICTURE_FILENAME);
+    if ((*picture_filename != '\0') &&
+        !g_file_test (picture_filename, G_FILE_TEST_EXISTS))
     {
-        *keyfile = '\0';
-        g_settings_set_string (settings, MATE_BG_KEY_PICTURE_FILENAME, keyfile);
+        *picture_filename = '\0';
+        g_settings_set_string (settings,
+                               MATE_BG_KEY_PICTURE_FILENAME,
+                               picture_filename);
     }
+    g_free (picture_filename);
 
     if (self->details->bg)
         mate_bg_load_from_gsettings (self->details->bg,
@@ -1133,7 +1142,6 @@ eel_background_new (void)
 {
     return EEL_BACKGROUND (g_object_new (EEL_TYPE_BACKGROUND, NULL));
 }
-
 
 /*
  * self check code

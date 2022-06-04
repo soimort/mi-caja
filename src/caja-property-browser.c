@@ -29,6 +29,7 @@
  */
 
 #include <config.h>
+#include <limits.h>
 #include <math.h>
 
 #include <libxml/parser.h>
@@ -168,7 +169,6 @@ static GdkPixbuf * make_color_drag_image                        (CajaPropertyBro
         const char                    *color_spec,
         gboolean                       trim_edges);
 
-
 #define BROWSER_CATEGORIES_FILE_NAME "browser.xml"
 
 #define PROPERTY_BROWSER_WIDTH 540
@@ -196,9 +196,7 @@ static GtkTargetEntry drag_types[] =
     { "text/uri-list",  0, PROPERTY_TYPE }
 };
 
-
 G_DEFINE_TYPE_WITH_PRIVATE (CajaPropertyBrowser, caja_property_browser, GTK_TYPE_WINDOW)
-
 
 /* Destroy the three dialogs for adding patterns/colors/emblems if any of them
    exist. */
@@ -433,7 +431,6 @@ caja_property_browser_init (CajaPropertyBrowser *property_browser)
     g_signal_connect_object (property_browser->details->add_button, "clicked",
                              G_CALLBACK (add_new_button_callback), property_browser, 0);
 
-
     /* now create the actual content, with the category pane and the content frame */
 
     /* the actual contents are created when necessary */
@@ -581,7 +578,6 @@ caja_property_browser_drag_begin (GtkWidget *widget,
 
 }
 
-
 /* drag and drop data get handler */
 
 static void
@@ -620,18 +616,18 @@ caja_property_browser_drag_data_get (GtkWidget *widget,
         else if (strcmp (property_browser->details->drag_type,
                          "application/x-color") == 0)
         {
-            GdkColor color;
-            guint16 colorArray[4];
-
             /* handle the "reset" case as an image */
             if (g_strcmp0 (property_browser->details->dragged_file, RESET_IMAGE_NAME) != 0)
             {
-                gdk_color_parse (property_browser->details->dragged_file, &color);
+                GdkRGBA color;
+                guint16 colorArray [4];
 
-                colorArray[0] = color.red;
-                colorArray[1] = color.green;
-                colorArray[2] = color.blue;
-                colorArray[3] = 0xffff;
+                gdk_rgba_parse (&color, property_browser->details->dragged_file);
+
+                colorArray [0] = (guint16) (color.red   * 65535.0);
+                colorArray [1] = (guint16) (color.green * 65535.0);
+                colorArray [2] = (guint16) (color.blue  * 65535.0);
+                colorArray [3] = USHRT_MAX;
 
                 gtk_selection_data_set(selection_data,
                                        target, 16, (const char *) &colorArray[0], 8);
@@ -800,7 +796,6 @@ make_drag_image (CajaPropertyBrowser *property_browser, const char* file_name)
     return pixbuf;
 }
 
-
 /* create a pixbuf and fill it with a color */
 
 static GdkPixbuf*
@@ -809,15 +804,16 @@ make_color_drag_image (CajaPropertyBrowser *property_browser, const char *color_
     GdkPixbuf *color_square;
     GdkPixbuf *ret;
     int row, col, stride;
-    char *pixels;
-    GdkColor color;
+    guchar *pixels;
+    GdkRGBA color;
+    guchar red, green, blue;
 
     color_square = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, COLOR_SQUARE_SIZE, COLOR_SQUARE_SIZE);
 
-    gdk_color_parse (color_spec, &color);
-    color.red >>= 8;
-    color.green >>= 8;
-    color.blue >>= 8;
+    gdk_rgba_parse (&color, color_spec);
+    red   = (guchar) (color.red * 255.0);
+    green = (guchar) (color.green * 255.0);
+    blue  = (guchar) (color.blue * 255.0);
 
     pixels = gdk_pixbuf_get_pixels (color_square);
     stride = gdk_pixbuf_get_rowstride (color_square);
@@ -825,16 +821,16 @@ make_color_drag_image (CajaPropertyBrowser *property_browser, const char *color_
     /* loop through and set each pixel */
     for (row = 0; row < COLOR_SQUARE_SIZE; row++)
     {
-        char *row_pixels;
+        guchar *row_pixels;
 
         row_pixels =  (pixels + (row * stride));
 
         for (col = 0; col < COLOR_SQUARE_SIZE; col++)
         {
-            *row_pixels++ = color.red;
-            *row_pixels++ = color.green;
-            *row_pixels++ = color.blue;
-            *row_pixels++ = 255;
+            *row_pixels++ = red;
+            *row_pixels++ = green;
+            *row_pixels++ = blue;
+            *row_pixels++ = UCHAR_MAX;
         }
     }
 
@@ -903,19 +899,23 @@ write_browser_xml (CajaPropertyBrowser *property_browser,
 static xmlNodePtr
 get_color_category (xmlDocPtr document)
 {
-    return eel_xml_get_root_child_by_name_and_property (document, "category", "name", "colors");
+    return eel_xml_get_root_child_by_name_and_property (document,
+                                                        (const xmlChar *) "category",
+                                                        (const xmlChar *) "name",
+                                                        (const xmlChar *) "colors");
 }
 
 /* routines to remove specific category types.  First, handle colors */
 
 static void
-remove_color (CajaPropertyBrowser *property_browser, const char* color_name)
+remove_color (CajaPropertyBrowser *property_browser,
+              const xmlChar       *color_name)
 {
     /* load the local xml file to remove the color */
     xmlDocPtr document;
     xmlNodePtr cur_node, color_node;
     gboolean match;
-    char *name;
+    xmlChar *name;
 
     document = read_browser_xml (property_browser);
     if (document == NULL)
@@ -938,9 +938,8 @@ remove_color (CajaPropertyBrowser *property_browser, const char* color_name)
                 continue;
             }
 
-            name = xmlGetProp (color_node, "name");
-            match = name != NULL
-                    && strcmp (name, color_name) == 0;
+            name = xmlGetProp (color_node, (const xmlChar *) "name");
+            match = name != NULL && xmlStrcmp (name, color_name) == 0;
             xmlFree (name);
 
             if (match)
@@ -1022,7 +1021,7 @@ caja_property_browser_remove_element (CajaPropertyBrowser *property_browser, Eel
         break;
     case CAJA_PROPERTY_COLOR:
         color_name = eel_labeled_image_get_text (child);
-        remove_color (property_browser, color_name);
+        remove_color (property_browser, (const xmlChar *) color_name);
         g_free (color_name);
         break;
     case CAJA_PROPERTY_EMBLEM:
@@ -1271,7 +1270,6 @@ add_pattern_to_browser (GtkDialog *dialog, gint response_id, gpointer data)
         return;
     }
 
-
     user_directory = caja_get_user_directory ();
 
     /* copy the image file to the patterns directory */
@@ -1301,7 +1299,6 @@ add_pattern_to_browser (GtkDialog *dialog, gint response_id, gpointer data)
     g_object_unref (selected);
     g_object_unref (dest);
     g_free (basename);
-
 
     /* update the property browser's contents to show the new one */
     caja_property_browser_update_contents (property_browser);
@@ -1360,7 +1357,9 @@ add_new_pattern (CajaPropertyBrowser *property_browser)
 /* here's where we add the passed in color to the file that defines the colors */
 
 static void
-add_color_to_file (CajaPropertyBrowser *property_browser, const char *color_spec, const char *color_name)
+add_color_to_file (CajaPropertyBrowser *property_browser,
+                   const xmlChar       *color_spec,
+                   const xmlChar       *color_name)
 {
     xmlNodePtr cur_node, new_color_node, children_node;
     xmlDocPtr document;
@@ -1382,7 +1381,7 @@ add_color_to_file (CajaPropertyBrowser *property_browser, const char *color_spec
         {
             xmlChar *child_color_name;
 
-            child_color_name = xmlGetProp (children_node, "name");
+            child_color_name = xmlGetProp (children_node, (const xmlChar *) "name");
             if (xmlStrcmp (color_name, child_color_name) == 0)
             {
                 color_name_exists = TRUE;
@@ -1397,10 +1396,10 @@ add_color_to_file (CajaPropertyBrowser *property_browser, const char *color_spec
         /* add a new color node */
         if (!color_name_exists)
         {
-            new_color_node = xmlNewChild (cur_node, NULL, "color", NULL);
+            new_color_node = xmlNewChild (cur_node, NULL, (const xmlChar *) "color", NULL);
             xmlNodeSetContent (new_color_node, color_spec);
-            xmlSetProp (new_color_node, "local", "1");
-            xmlSetProp (new_color_node, "name", color_name);
+            xmlSetProp (new_color_node, (const xmlChar *) "local", (const xmlChar *) "1");
+            xmlSetProp (new_color_node, (const xmlChar *) "name", color_name);
 
             write_browser_xml (property_browser, document);
         }
@@ -1442,7 +1441,7 @@ add_color_to_browser (GtkWidget *widget, gint which_button, gpointer data)
         }
         else
         {
-            add_color_to_file (property_browser, color_spec, stripped_color_name);
+            add_color_to_file (property_browser, (const xmlChar *) color_spec, (const xmlChar *) stripped_color_name);
             caja_property_browser_update_contents(property_browser);
         }
         g_free (stripped_color_name);
@@ -1480,7 +1479,6 @@ show_color_selection_window (GtkWidget *widget, gpointer data)
     gtk_window_set_position (GTK_WINDOW (property_browser->details->colors_dialog), GTK_WIN_POS_MOUSE);
     gtk_widget_show (GTK_WIDGET(property_browser->details->colors_dialog));
 }
-
 
 /* here's the routine to add a new color, by putting up a color selector */
 
@@ -1574,7 +1572,6 @@ emblem_dialog_clicked (GtkWidget *dialog, int which_button, CajaPropertyBrowser 
         {
             stripped_keyword = g_strstrip (g_strdup (new_keyword));
         }
-
 
         caja_emblem_install_custom_emblem (pixbuf,
                                            stripped_keyword,
@@ -1943,7 +1940,6 @@ make_properties_from_directories (CajaPropertyBrowser *property_browser)
         blank = eel_image_table_add_empty_image (image_table);
         labeled_image_configure (EEL_LABELED_IMAGE (blank));
 
-
         num_images = eel_wrap_table_get_num_children (EEL_WRAP_TABLE (image_table));
         g_assert (num_images > 0);
         eel_wrap_table_reorder_child (EEL_WRAP_TABLE (image_table),
@@ -1960,7 +1956,7 @@ make_properties_from_directories (CajaPropertyBrowser *property_browser)
             object_pixbuf = gdk_pixbuf_new_from_file (path, NULL);
         }
         g_free (path);
-        property_image = labeled_image_new (_("Erase"), object_pixbuf, "erase", PANGO_SCALE_LARGE);
+        property_image = labeled_image_new (_("Erase"), object_pixbuf, (const char *) "erase", PANGO_SCALE_LARGE);
         eel_labeled_image_set_fixed_image_height (EEL_LABELED_IMAGE (property_image), MAX_EMBLEM_HEIGHT);
 
         gtk_container_add (GTK_CONTAINER (image_table), property_image);
@@ -2035,7 +2031,7 @@ make_properties_from_xml_node (CajaPropertyBrowser *property_browser,
     xmlNodePtr child_node;
     GdkPixbuf *pixbuf;
     GtkWidget *new_property;
-    char *deleted, *local, *color, *name;
+    xmlChar *deleted, *local, *color, *name;
 
     gboolean local_only = property_browser->details->remove_mode;
 
@@ -2060,8 +2056,8 @@ make_properties_from_xml_node (CajaPropertyBrowser *property_browser,
         /* We used to mark colors that were removed with the "deleted" attribute.
          * To prevent these colors from suddenly showing up now, this legacy remains.
          */
-        deleted = xmlGetProp (child_node, "deleted");
-        local = xmlGetProp (child_node, "local");
+        deleted = xmlGetProp (child_node, (const xmlChar *) "deleted");
+        local = xmlGetProp (child_node, (const xmlChar *) "local");
 
         if (deleted == NULL && (!local_only || local != NULL))
         {
@@ -2071,13 +2067,18 @@ make_properties_from_xml_node (CajaPropertyBrowser *property_browser,
             }
 
             color = xmlNodeGetContent (child_node);
-            name = eel_xml_get_property_translated (child_node, "name");
+            name = xmlGetProp (child_node, (const xmlChar *) "name");
 
             /* make the image from the color spec */
-            pixbuf = make_color_drag_image (property_browser, color, FALSE);
+            pixbuf = make_color_drag_image (property_browser,
+                                            (const char *) color,
+                                            FALSE);
 
             /* make the tile from the pixmap and name */
-            new_property = labeled_image_new (name, pixbuf, color, PANGO_SCALE_LARGE);
+            new_property = labeled_image_new (_((const char *) name),
+                                              pixbuf,
+                                              (const char *) color,
+                                              PANGO_SCALE_LARGE);
 
             gtk_container_add (GTK_CONTAINER (property_browser->details->content_table), new_property);
             gtk_widget_show (new_property);
@@ -2139,6 +2140,14 @@ property_browser_category_button_new (const char *display_name,
     return button;
 }
 
+static void
+free_category_link_name (gpointer  data,
+                         GClosure *closure)
+{
+    (void) closure;
+    g_free (data);
+}
+
 /* this is a utility routine to generate a category link widget and install it in the browser */
 static void
 make_category_link (CajaPropertyBrowser *property_browser,
@@ -2180,10 +2189,9 @@ make_category_link (CajaPropertyBrowser *property_browser,
 
     /* add a signal to handle clicks */
     g_object_set_data (G_OBJECT(button), "user_data", property_browser);
-    g_signal_connect_data
-    (button, "toggled",
-     G_CALLBACK (category_toggled_callback),
-     g_strdup (name), (GClosureNotify) g_free, 0);
+    g_signal_connect_data (button, "toggled",
+                           G_CALLBACK (category_toggled_callback),
+                           g_strdup (name), free_category_link_name, 0);
 }
 
 /* update_contents populates the property browser with information specified by the path and other state variables */
@@ -2195,7 +2203,7 @@ caja_property_browser_update_contents (CajaPropertyBrowser *property_browser)
     GtkWidget *viewport;
     GtkRadioButton *group;
     gboolean got_categories;
-    char *name, *image, *type, *description, *display_name, *path, *mode;
+    xmlChar *name, *image, *type, *description, *display_name, *path, *mode;
 
     /* load the xml document corresponding to the path and selection */
     document = read_browser_xml (property_browser);
@@ -2257,24 +2265,24 @@ caja_property_browser_update_contents (CajaPropertyBrowser *property_browser)
             continue;
         }
 
-        if (strcmp (cur_node->name, "category") == 0)
+        if (cur_node->name && xmlStrcmp (cur_node->name, (const xmlChar *) "category") == 0)
         {
-            name = xmlGetProp (cur_node, "name");
+            name = xmlGetProp (cur_node, (const xmlChar *) "name");
 
             if (property_browser->details->category != NULL
-                    && strcmp (property_browser->details->category, name) == 0)
+                    && strcmp (property_browser->details->category, (const char *) name) == 0)
             {
-                path = xmlGetProp (cur_node, "path");
-                mode = xmlGetProp (cur_node, "mode");
-                description = eel_xml_get_property_translated (cur_node, "description");
-                type = xmlGetProp (cur_node, "type");
+                path = xmlGetProp (cur_node, (const xmlChar *) "path");
+                mode = xmlGetProp (cur_node, (const xmlChar *) "mode");
+                description = xmlGetProp (cur_node, (const xmlChar *) "description");
+                type = xmlGetProp (cur_node, (const xmlChar *) "type");
 
                 make_category (property_browser,
-                               path,
-                               mode,
+                               (const char *) path,
+                               (const char *) mode,
                                cur_node,
-                               description);
-                caja_property_browser_set_drag_type (property_browser, type);
+                               _((const char *) description));
+                caja_property_browser_set_drag_type (property_browser, (const char *) type);
 
                 xmlFree (path);
                 xmlFree (mode);
@@ -2284,13 +2292,13 @@ caja_property_browser_update_contents (CajaPropertyBrowser *property_browser)
 
             if (!got_categories)
             {
-                display_name = eel_xml_get_property_translated (cur_node, "display_name");
-                image = xmlGetProp (cur_node, "image");
+                display_name = xmlGetProp (cur_node, (const xmlChar *) "display_name");
+                image = xmlGetProp (cur_node, (const xmlChar *) "image");
 
                 make_category_link (property_browser,
-                                    name,
-                                    display_name,
-                                    image,
+                                    (const char *) name,
+                                    _((const char *) display_name),
+                                    (const char *) image,
                                     &group);
 
                 xmlFree (display_name);
@@ -2355,7 +2363,6 @@ caja_property_browser_update_contents (CajaPropertyBrowser *property_browser)
 
         }
         gtk_widget_show (property_browser->details->add_button);
-
 
         if (property_browser->details->remove_mode)
         {
@@ -2471,7 +2478,6 @@ caja_property_browser_set_category (CajaPropertyBrowser *property_browser,
     caja_property_browser_update_contents (property_browser);
 }
 
-
 /* here is the routine that populates the property browser with the appropriate information
    when the path changes */
 
@@ -2498,7 +2504,6 @@ emblems_changed_callback (GObject *signaller,
 {
     caja_property_browser_update_contents (property_browser);
 }
-
 
 static void
 emit_emblems_changed_signal (void)

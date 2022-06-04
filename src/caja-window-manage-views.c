@@ -510,7 +510,6 @@ new_window_show_callback (GtkWidget *widget,
                                           user_data);
 }
 
-
 void
 caja_window_slot_open_location_full (CajaWindowSlot *slot,
                                      GFile *location,
@@ -754,7 +753,6 @@ caja_window_slot_open_location_with_selection (CajaWindowSlot *slot,
                                          flags, selection, NULL, NULL);
 }
 
-
 void
 caja_window_slot_go_home (CajaWindowSlot *slot, gboolean new_tab)
 {
@@ -833,7 +831,6 @@ report_nascent_content_view_failure_to_user (CajaWindowSlot *slot,
     g_free (message);
 }
 
-
 const char *
 caja_window_slot_get_content_view_id (CajaWindowSlot *slot)
 {
@@ -868,6 +865,14 @@ report_callback (CajaWindowSlot *slot,
     }
 
     return FALSE;
+}
+
+static gpointer
+copy_object (gconstpointer obj,
+             gpointer      user_data)
+{
+    (void) user_data;
+    return g_object_ref (G_OBJECT (obj));
 }
 
 /*
@@ -947,7 +952,7 @@ begin_location_change (CajaWindowSlot *slot,
     slot->location_change_type = type;
     slot->location_change_distance = distance;
     slot->tried_mount = FALSE;
-    slot->pending_selection = g_list_copy_deep (new_selection, (GCopyFunc) g_object_ref, NULL);
+    slot->pending_selection = g_list_copy_deep (new_selection, copy_object, NULL);
 
     slot->pending_scroll_to = g_strdup (scroll_pos);
 
@@ -1498,7 +1503,7 @@ load_new_location (CajaWindowSlot *slot,
     window = slot->pane->window;
     g_assert (CAJA_IS_WINDOW (window));
 
-    selection_copy = g_list_copy_deep (selection, (GCopyFunc) g_object_ref, NULL);
+    selection_copy = g_list_copy_deep (selection, copy_object, NULL);
 
     view = NULL;
 
@@ -2222,7 +2227,6 @@ display_view_selection_failure (CajaWindow *window, CajaFile *file,
     g_free (detail_message);
 }
 
-
 void
 caja_window_slot_stop_loading (CajaWindowSlot *slot)
 {
@@ -2396,13 +2400,5 @@ caja_window_slot_reload (CajaWindowSlot *slot)
     g_free (current_pos);
     g_object_unref (location);
     g_list_free_full (selection, g_object_unref);
-}
-
-void
-caja_window_reload (CajaWindow *window)
-{
-    g_assert (CAJA_IS_WINDOW (window));
-
-    caja_window_slot_reload (window->details->active_pane->active_slot);
 }
 

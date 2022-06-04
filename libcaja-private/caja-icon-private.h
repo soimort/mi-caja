@@ -70,7 +70,6 @@ typedef struct
     eel_boolean_bit has_lazy_position : 1;
 } CajaIcon;
 
-
 /* Private CajaIconContainer members. */
 
 typedef struct
@@ -238,6 +237,9 @@ struct CajaIconContainerDetails
     /* Should the container keep icons aligned to a grid */
     gboolean keep_aligned;
 
+    /* Should the container not allow manual icon position */
+    gboolean lock_icons_position;
+
     /* Set to TRUE after first allocation has been done */
     gboolean has_been_allocated;
 
@@ -315,7 +317,5 @@ gboolean      caja_icon_container_scroll                      (CajaIconContainer
         int                    delta_x,
         int                    delta_y);
 void          caja_icon_container_update_scroll_region        (CajaIconContainer *container);
-
-
 
 #endif /* CAJA_ICON_CONTAINER_PRIVATE_H */

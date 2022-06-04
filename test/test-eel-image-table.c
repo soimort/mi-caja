@@ -5,27 +5,24 @@
 
 #include "test.h"
 
-static const char pixbuf_name[] = "/usr/share/pixmaps/mate-about-logo.png";
-
-#define BG_COLOR 0xFFFFFF
-#define BG_COLOR_SPEC "white"
+static const char pixbuf_name[] = PIXBUFDIR "/mate-logo-white.svg";
 
 static const char *names[] =
 {
 	"Tomaso Albinoni",
-	"Isaac AlbÈniz",
+	"Isaac Alb√©niz",
 	"Georges Bizet",
 	"Luigi Boccherini",
 	"Alexander Borodin",
 	"Johannes Brahms",
 	"Max Bruch",
 	"Anton Bruckner",
-	"FrÈdÈric Chopin",
+	"Fr√©d√©ric Chopin",
 	"Aaron Copland",
 	"John Corigliano",
 	"Claude Debussy",
-	"LÈo Delibes",
-	"AntonÌn Dvor·k",
+	"L√©o Delibes",
+	"Anton√≠n Dvor√°k",
 	"Edward Elgar",
 	"Manuel de Falla",
 	"George Gershwin",
@@ -77,7 +74,6 @@ labeled_image_new (const char *text,
 
 	return image;
 }
-
 
 static void
 image_table_child_enter_callback (GtkWidget *image_table,

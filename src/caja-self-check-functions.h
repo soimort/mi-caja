@@ -26,6 +26,8 @@
  * check functions in Caja proper.
  */
 
+#ifndef __CAJA_SELF_CHECK_FUNCTIONS_H__
+#define __CAJA_SELF_CHECK_FUNCTIONS_H__
 
 void caja_run_self_checks (void);
 
@@ -45,3 +47,6 @@ void caja_run_self_checks (void);
 
 /* Generate prototypes for all the functions. */
 CAJA_FOR_EACH_SELF_CHECK_FUNCTION (CAJA_SELF_CHECK_FUNCTION_PROTOTYPE)
+
+#endif	/* __CAJA_SELF_CHECK_FUNCTIONS_H__ */
+

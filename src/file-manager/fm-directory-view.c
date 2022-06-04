@@ -153,7 +153,6 @@ enum
   PROP_WINDOW_SLOT
 };
 
-
 static guint signals[LAST_SIGNAL] = { 0 };
 
 static GdkAtom copied_files_atom;
@@ -498,7 +497,6 @@ file_and_directory_list_to_files (GList *fad_list)
 	return g_list_reverse (res);
 }
 
-
 static GList *
 file_and_directory_list_from_files (CajaDirectory *directory, GList *files)
 {
@@ -522,7 +520,6 @@ file_and_directory_free (FileAndDirectory *fad)
 	caja_file_unref (fad->file);
 	g_free (fad);
 }
-
 
 static void
 file_and_directory_list_free (GList *list)
@@ -556,9 +553,6 @@ file_and_directory_hash  (gconstpointer  v)
 	fad = v;
 	return GPOINTER_TO_UINT (fad->file) ^ GPOINTER_TO_UINT (fad->directory);
 }
-
-
-
 
 static ScriptLaunchParameters *
 script_launch_parameters_new (CajaFile *file,
@@ -806,7 +800,6 @@ action_open_close_parent_callback (GtkAction *action,
 					  TRUE);
 	caja_file_list_free (selection);
 }
-
 
 static void
 action_open_alternate_callback (GtkAction *action,
@@ -1148,7 +1141,6 @@ action_invert_selection_callback (GtkAction *action,
 	fm_directory_view_invert_selection (callback_data);
 }
 
-
 static void
 pattern_select_response_cb (GtkWidget *dialog, int response, gpointer user_data)
 {
@@ -1290,7 +1282,6 @@ action_reset_to_defaults_callback (GtkAction *action,
 	fm_directory_view_reset_to_defaults (callback_data);
 }
 
-
 static void
 hidden_files_mode_changed (CajaWindow *window,
 			   gpointer callback_data)
@@ -1345,7 +1336,6 @@ query_name_entry_changed_cb  (GtkWidget *entry, GtkWidget *button)
 
 	gtk_widget_set_sensitive (button, sensitive);
 }
-
 
 static void
 action_save_search_as_callback (GtkAction *action,
@@ -1459,7 +1449,6 @@ action_save_search_as_callback (GtkAction *action,
 		gtk_widget_destroy (dialog);
 	}
 }
-
 
 static void
 action_empty_trash_callback (GtkAction *action,
@@ -1819,7 +1808,6 @@ remove_directory_from_directory_list (FMDirectoryView *view,
 	caja_directory_unref (directory);
 }
 
-
 static void
 add_directory_to_scripts_directory_list (FMDirectoryView *view,
 					 CajaDirectory *directory)
@@ -1979,7 +1967,6 @@ fm_directory_view_set_selection_locations (CajaView *caja_view,
 			g_list_copy_deep (selection_locations, (GCopyFunc) g_object_ref, NULL);
 	}
 }
-
 
 void
 fm_directory_view_init_view_iface (CajaViewIface *iface)
@@ -2364,9 +2351,9 @@ fm_directory_view_display_selection_info (FMDirectoryView *view)
 			char *size_string;
 
 			if (g_settings_get_boolean (caja_preferences, CAJA_PREFERENCES_USE_IEC_UNITS))
-				size_string = g_format_size_full (non_folder_size, G_FORMAT_SIZE_IEC_UNITS);
+				size_string = g_format_size_full ((guint64) non_folder_size, G_FORMAT_SIZE_IEC_UNITS);
 			else
-				size_string = g_format_size(non_folder_size);
+				size_string = g_format_size ((guint64) non_folder_size);
 
 			/* Translators: This is marked for translation in case a localiser
 			 * needs to use something other than parentheses. The
@@ -2593,7 +2580,6 @@ done_loading (FMDirectoryView *view,
 	view->details->loading = FALSE;
 }
 
-
 typedef struct {
 	GHashTable *debuting_files;
 	GList	   *added_files;
@@ -2722,7 +2708,6 @@ remove_not_really_moved_files (gpointer key,
 				       caja_file_get (loc));
 	return TRUE;
 }
-
 
 /* When this function is invoked, the file operation is over, but all
  * the icons may not have been added to the directory view yet, so
@@ -3171,8 +3156,6 @@ queue_pending_files (FMDirectoryView *view,
 		}
 	}
 
-
-
 	*pending_list = g_list_concat (file_and_directory_list_from_files (directory, files),
 				       *pending_list);
 
@@ -3544,7 +3527,6 @@ fm_directory_view_zoom_to_level (FMDirectoryView *view,
 		(FM_DIRECTORY_VIEW_CLASS, view,
 		 zoom_to_level, (view, zoom_level));
 }
-
 
 CajaZoomLevel
 fm_directory_view_get_zoom_level (FMDirectoryView *view)
@@ -4013,7 +3995,6 @@ delayed_rename_file_hack_removed (RenameData *data)
 	g_free (data);
 }
 
-
 static void
 rename_file (FMDirectoryView *view, CajaFile *new_file)
 {
@@ -4074,7 +4055,6 @@ typedef struct {
 	GHashTable *added_locations;
 } NewFolderData;
 
-
 static void
 track_newly_added_locations (FMDirectoryView *view, CajaFile *new_file,
 			     CajaDirectory *directory, gpointer user_data)
@@ -4114,7 +4094,6 @@ new_folder_done (GFile *new_folder, gpointer user_data)
 	screen = gtk_widget_get_screen (GTK_WIDGET (directory_view));
 	g_snprintf (screen_string, sizeof (screen_string), "%d", gdk_x11_screen_get_screen_number (screen));
 
-
 	file = caja_file_get (new_folder);
 	caja_file_set_metadata
 		(file, CAJA_METADATA_KEY_SCREEN,
@@ -4143,7 +4122,6 @@ new_folder_done (GFile *new_folder, gpointer user_data)
 	eel_remove_weak_pointer (&data->directory_view);
 	g_free (data);
 }
-
 
 static NewFolderData *
 new_folder_data_new (FMDirectoryView *directory_view)
@@ -4426,7 +4404,6 @@ escape_action_path (const char *action_path)
 	}
 	return g_string_free (s, FALSE);
 }
-
 
 static void
 add_submenu (GtkUIManager *ui_manager,
@@ -4730,6 +4707,7 @@ reset_open_with_menu (FMDirectoryView *view, GList *selection)
 	GtkUIManager *ui_manager;
 	GtkAction *action;
 	GAppInfo *default_app;
+	char *uri;
 
 	/* Clear any previous inserted items in the applications and viewers placeholders */
 
@@ -4761,7 +4739,6 @@ reset_open_with_menu (FMDirectoryView *view, GList *selection)
 	if (g_list_length (selection) == 1) {
 		add_x_content_apps (view, CAJA_FILE (selection->data), &applications);
 	}
-
 
 	num_applications = g_list_length (applications);
 
@@ -4811,11 +4788,14 @@ reset_open_with_menu (FMDirectoryView *view, GList *selection)
 	}
 
 	/* Show open parent folder action if we are in search mode */
-	if (eel_uri_is_search (fm_directory_view_get_uri (view)) && g_list_length (selection) == 1)
+	uri = fm_directory_view_get_uri (view);
+	if (eel_uri_is_search (uri) && g_list_length (selection) == 1)
 		add_parent_folder_to_open_menu (view,
 					       selection,
 					       FM_DIRECTORY_VIEW_MENU_PATH_OPEN,
 					       FM_DIRECTORY_VIEW_POPUP_PATH_OPEN);
+
+	g_free (uri);
 
 	open_with_chooser_visible = other_applications_visible &&
 				    g_list_length (selection) == 1;
@@ -4873,7 +4853,6 @@ typedef struct
 	GList *selection;
 	GtkAction *action;
 } ExtensionActionCallbackData;
-
 
 static void
 extension_action_callback_data_free (ExtensionActionCallbackData *data)
@@ -5350,7 +5329,6 @@ static void set_script_environment_variables(FMDirectoryView* view, GList* selec
 
 	g_setenv("CAJA_SCRIPT_CURRENT_URI", uri, TRUE);
 	g_setenv("NAUTILUS_SCRIPT_CURRENT_URI", uri, TRUE); // compatibilidad GNOME
-
 
 	g_free(uri);
 
@@ -5929,8 +5907,6 @@ update_directory_in_templates_menu (FMDirectoryView *view,
 	return any_templates;
 }
 
-
-
 static void
 update_templates_menu (FMDirectoryView *view)
 {
@@ -5990,7 +5966,6 @@ update_templates_menu (FMDirectoryView *view)
 
 	g_free (templates_directory_uri);
 }
-
 
 static void
 action_open_scripts_folder_callback (GtkAction *action,
@@ -7386,9 +7361,10 @@ fm_directory_view_init_show_backup_files (FMDirectoryView *view)
 }
 
 static const GtkActionEntry directory_view_entries[] = {
-  /* name, icon name, label */ { "New Documents", "document-new", N_("Create _Document") },
+  /* name, icon name, label */ { "New Documents", "document-new", N_("Create _Document"),
+                                 NULL, NULL, NULL },
   /* name, icon name, label */ { "Open With", NULL, N_("Open Wit_h"),
-                                 NULL, N_("Choose a program with which to open the selected item") },
+                                 NULL, N_("Choose a program with which to open the selected item"), NULL },
   /* name, icon name */        { "Properties", "document-properties",
   /* label, accelerator */       N_("_Properties"), "<alt>Return",
   /* tooltip */                  N_("View or modify the properties of each selected item"),
@@ -7401,7 +7377,7 @@ static const GtkActionEntry directory_view_entries[] = {
   /* label, accelerator */       N_("Create _Folder"), "<control><shift>N",
   /* tooltip */                  N_("Create a new empty folder inside this folder"),
                                  G_CALLBACK (action_new_folder_callback) },
-  /* name, icon name, label */ { "No Templates", NULL, N_("No templates installed") },
+  /* name, icon name, label */ { "No Templates", NULL, N_("No templates installed"), NULL, NULL, NULL },
   /* name, icon name */        { "New Empty File", NULL,
   /* Translators: this is used to indicate that a file doesn't contain anything */
   /* label, accelerator */       N_("_Empty File"), NULL,
@@ -7465,8 +7441,10 @@ static const GtkActionEntry directory_view_entries[] = {
   /* label, accelerator */       N_("_Paste Into Folder"), "",
   /* tooltip */                  N_("Move or copy files previously selected by a Cut or Copy command into the selected folder"),
                                  G_CALLBACK (action_paste_files_into_callback) },
-  /* name, icon name, label */ { "CopyToMenu", NULL, N_("Cop_y to") },
-  /* name, icon name, label */ { "MoveToMenu", NULL, N_("M_ove to") },
+  /* name, icon name, label */ { "CopyToMenu", NULL, N_("Cop_y to"),
+                                 NULL, NULL, NULL },
+  /* name, icon name, label */ { "MoveToMenu", NULL, N_("M_ove to"),
+                                 NULL, NULL, NULL },
   /* name, icon name */        { "Select All", NULL,
   /* label, accelerator */       N_("Select _All"), "<control>A",
   /* tooltip */                  N_("Select all items in this window"),
@@ -7507,14 +7485,14 @@ static const GtkActionEntry directory_view_entries[] = {
   /* label, accelerator */       N_("_Restore"), NULL,
 				 NULL,
                                  G_CALLBACK (action_restore_from_trash_callback) },
-  /* name, icon name */		  { FM_ACTION_UNDO, "edit-undo",
-  /* label, accelerator */		 N_("_Undo"), "<control>Z",
-  /* tooltip */ 				 	 N_("Undo the last action"),
-								 G_CALLBACK (action_undo_callback) },
-  /* name, icon name */		  { FM_ACTION_REDO, "edit-redo",
-  /* label, accelerator */	     N_("_Redo"), "<control>Y",
-  /* tooltip */     			 	 N_("Redo the last undone action"),
-								 G_CALLBACK (action_redo_callback) },
+  /* name, icon name */        { FM_ACTION_UNDO, "edit-undo",
+  /* label, accelerator */       N_("_Undo"), "<control>Z",
+  /* tooltip */                  N_("Undo the last action"),
+                                 G_CALLBACK (action_undo_callback) },
+  /* name, icon name */        { FM_ACTION_REDO, "edit-redo",
+  /* label, accelerator */       N_("_Redo"), "<control>Y",
+  /* tooltip */                  N_("Redo the last undone action"),
+                                 G_CALLBACK (action_redo_callback) },
 
   /*
    * multiview-TODO: decide whether "Reset to Defaults" should
@@ -7775,7 +7753,9 @@ real_merge_menus (FMDirectoryView *view)
 
 	G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 	action_group = gtk_action_group_new ("DirViewActions");
+#ifdef ENABLE_NLS
 	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
 	view->details->dir_action_group = action_group;
 	gtk_action_group_add_actions (action_group,
 				      directory_view_entries, G_N_ELEMENTS (directory_view_entries),
@@ -7814,7 +7794,6 @@ real_merge_menus (FMDirectoryView *view)
 	view->details->scripts_invalid = TRUE;
 	view->details->templates_invalid = TRUE;
 }
-
 
 static gboolean
 can_paste_into_file (CajaFile *file)
@@ -7878,7 +7857,6 @@ clipboard_targets_received (GtkClipboard     *clipboard,
 			}
 		}
 	}
-
 
 	selection = fm_directory_view_get_selection (view);
 	count = g_list_length (selection);
@@ -9139,7 +9117,6 @@ real_update_menus (FMDirectoryView *view)
 	}
 	gtk_action_set_sensitive (action, can_delete_files);
 
-
 	action = gtk_action_group_get_action (view->details->dir_action_group,
 					      FM_ACTION_RESTORE_FROM_TRASH);
 	update_restore_from_trash_action (action, selection, FALSE);
@@ -9213,7 +9190,6 @@ real_update_menus (FMDirectoryView *view)
 					      FM_ACTION_SAVE_SEARCH_AS);
 	gtk_action_set_visible (action, show_save_search_as);
 
-
 	action = gtk_action_group_get_action (view->details->dir_action_group,
 					      FM_ACTION_SELECT_ALL);
 	gtk_action_set_sensitive (action, !fm_directory_view_is_empty (view));
@@ -9277,7 +9253,6 @@ real_update_menus (FMDirectoryView *view)
 	action = gtk_action_group_get_action (view->details->dir_action_group,
 					      FM_ACTION_MOVE_TO_NEXT_PANE);
 	gtk_action_set_sensitive (action, can_delete_files && next_pane_is_writable);
-
 
 	action = gtk_action_group_get_action (view->details->dir_action_group,
 					      FM_ACTION_COPY_TO_HOME);
@@ -10258,7 +10233,6 @@ fm_directory_view_update_menus (FMDirectoryView *view)
 		return;
 	}
 
-
 	EEL_CALL_METHOD
 		(FM_DIRECTORY_VIEW_CLASS, view,
 		 update_menus, (view));
@@ -10456,7 +10430,6 @@ revert_slashes (char *string)
 		string++;
 	}
 }
-
 
 static GdkDragAction
 ask_link_action (FMDirectoryView *view)
@@ -10732,6 +10705,8 @@ fm_directory_view_handle_netscape_url_drop (FMDirectoryView  *view,
 			GdkScreen *screen;
 			int screen_num;
 			char *link_display_name;
+			GError *error = NULL;
+			gboolean success;
 
 			link_display_name = g_strdup_printf (_("Link to %s"), link_name);
 
@@ -10745,14 +10720,27 @@ fm_directory_view_handle_netscape_url_drop (FMDirectoryView  *view,
 			screen = gtk_widget_get_screen (GTK_WIDGET (view));
 			screen_num = gdk_x11_screen_get_screen_number (screen);
 
-			caja_link_local_create (target_uri != NULL ? target_uri : container_uri,
-						    link_name,
-						    link_display_name,
-						    "mate-fs-bookmark",
-						    url,
-						    &point,
-						    screen_num,
-						    TRUE);
+			success = caja_link_local_create (target_uri != NULL ? target_uri : container_uri,
+			                                  link_name,
+			                                  link_display_name,
+			                                  "mate-fs-bookmark",
+			                                  url,
+			                                  &point,
+			                                  screen_num,
+			                                  TRUE,
+			                                  &error);
+			if (!success) {
+				if (error) {
+					eel_show_error_dialog (_("Link Creation Failed"),
+					                       error->message, NULL);
+					g_error_free (error);
+				} else {
+					gchar *error_message = g_strdup_printf (_("Cannot create the link to %s"), url);
+					eel_show_error_dialog (_("Link Creation Failed"),
+					                       error_message, NULL);
+					g_free (error_message);
+				}
+			}
 
 			g_free (link_display_name);
 		}
@@ -11014,7 +11002,6 @@ fm_directory_view_set_property (GObject         *object,
     }
 }
 
-
 gboolean
 fm_directory_view_handle_scroll_event (FMDirectoryView *directory_view,
 				       GdkEventScroll *event)
@@ -11082,7 +11069,6 @@ fm_directory_view_scroll_event (GtkWidget *widget,
 
 	return GTK_WIDGET_CLASS (parent_class)->scroll_event (widget, event);
 }
-
 
 static void
 fm_directory_view_parent_set (GtkWidget *widget,

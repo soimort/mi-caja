@@ -394,6 +394,10 @@ sync_window_title (CajaWindow *window)
 
     slot = caja_window_get_active_slot (window);
 
+    /* Don't change desktop's title, it would override the one already defined */
+    if (CAJA_IS_DESKTOP_WINDOW (window))
+        return;
+
     if (slot->title == NULL || slot->title[0] == '\0')
     {
         gtk_window_set_title (GTK_WINDOW (window), _("Caja"));
@@ -917,7 +921,9 @@ action_search_callback (GtkAction *action,
 
 static const GtkActionEntry spatial_entries[] =
 {
-    /* name, icon name, label */ { SPATIAL_ACTION_PLACES, NULL, N_("_Places") },
+    /* name, icon name, label */ { SPATIAL_ACTION_PLACES, NULL, N_("_Places"),
+        NULL, NULL, NULL
+    },
     /* name, icon name, label */ {
         SPATIAL_ACTION_GO_TO_LOCATION, NULL, N_("Open _Location..."),
         "<control>L", N_("Specify a location to open"),
@@ -1041,7 +1047,9 @@ caja_spatial_window_init (CajaSpatialWindow *window)
 
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
     action_group = gtk_action_group_new ("SpatialActions");
+#ifdef ENABLE_NLS
     gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
     window->details->spatial_action_group = action_group;
     gtk_action_group_add_actions (action_group,
                                   spatial_entries, G_N_ELEMENTS (spatial_entries),
