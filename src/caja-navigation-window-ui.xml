@@ -15,7 +15,7 @@
 		</placeholder>
 
 		<placeholder name="Close Items Placeholder">
-			<menuitem name="Close All Windows" action="Close All Windows"/>
+			<!-- menuitem name="Close All Windows" action="Close All Windows"/ -->
 		</placeholder>
 	</menu>
 	<menu action="View">
